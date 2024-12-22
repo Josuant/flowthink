@@ -1,0 +1,4 @@
+enum AiProviderType {
+  openai,
+  gemini,
+}
