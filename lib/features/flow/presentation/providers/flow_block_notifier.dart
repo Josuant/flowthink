@@ -17,6 +17,14 @@ class FlowBlockNotifier extends StateNotifier<FlowBlockState> {
             globalPosition: initialPosition,
             buttonAlignment: Alignment.centerLeft,
             textController: TextEditingController(text: initialText),
+            isSelected: false,
+            isHovered: false,
+            isAnimating: false,
+            isLocked: false,
+            isExpanded: false,
+            isInAnotherBlock: false,
+            anotherBlockPosition: Offset.zero,
+            id: '',
           ),
         );
 
@@ -29,6 +37,10 @@ class FlowBlockNotifier extends StateNotifier<FlowBlockState> {
     );
   }
 
+  void setGlobalPosition(Offset position) {
+    state = state.copyWith(globalPosition: position);
+  }
+
   // Toggle or set isLongPress
   void setLongPress(bool value) {
     state = state.copyWith(isLongPress: value);
@@ -37,6 +49,13 @@ class FlowBlockNotifier extends StateNotifier<FlowBlockState> {
   // Toggle editing
   void setEditing(bool value) {
     state = state.copyWith(isEditing: value);
+  }
+
+  void onFinishDrag(Offset finalPosition) {
+    state = state.copyWith(
+      globalPosition: finalPosition,
+      isDragging: false,
+    );
   }
 
   // Toggle dragging

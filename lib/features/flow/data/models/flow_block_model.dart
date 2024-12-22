@@ -30,20 +30,6 @@ class FlowBlockModel {
   @HiveField(10)
   final Icon icon;
   @HiveField(11)
-  final bool isSelected;
-  @HiveField(12)
-  final bool isHovered;
-  @HiveField(13)
-  final bool isEditing;
-  @HiveField(14)
-  final bool isDragging;
-  @HiveField(15)
-  final bool isAnimating;
-  @HiveField(16)
-  final bool isLocked;
-  @HiveField(17)
-  final bool isExpanded;
-  @HiveField(18)
   final List<String> tags;
 
   FlowBlockModel({
@@ -58,13 +44,6 @@ class FlowBlockModel {
     required this.backgroundColor,
     required this.textColor,
     required this.icon,
-    required this.isSelected,
-    required this.isHovered,
-    required this.isEditing,
-    required this.isDragging,
-    required this.isAnimating,
-    required this.isLocked,
-    required this.isExpanded,
     required this.tags,
   });
 
@@ -82,13 +61,6 @@ class FlowBlockModel {
       backgroundColor: entity.backgroundColor,
       textColor: entity.textColor,
       icon: entity.icon,
-      isSelected: entity.isSelected,
-      isHovered: entity.isHovered,
-      isEditing: entity.isEditing,
-      isDragging: entity.isDragging,
-      isAnimating: entity.isAnimating,
-      isLocked: entity.isLocked,
-      isExpanded: entity.isExpanded,
       tags: entity.tags,
     );
   }
@@ -107,14 +79,45 @@ class FlowBlockModel {
       backgroundColor: backgroundColor,
       textColor: textColor,
       icon: icon,
-      isSelected: isSelected,
-      isHovered: isHovered,
-      isEditing: isEditing,
-      isDragging: isDragging,
-      isAnimating: isAnimating,
-      isLocked: isLocked,
-      isExpanded: isExpanded,
       tags: tags,
+    );
+  }
+
+  // CopyWith method
+  FlowBlockModel copyWith({
+    String? id,
+    String? text,
+    FlowBlockType? type,
+    Offset? position,
+    double? width,
+    double? height,
+    double? circleRadius,
+    double? cornerRadius,
+    Color? backgroundColor,
+    Color? textColor,
+    Icon? icon,
+    bool? isSelected,
+    bool? isHovered,
+    bool? isEditing,
+    bool? isDragging,
+    bool? isAnimating,
+    bool? isLocked,
+    bool? isExpanded,
+    List<String>? tags,
+  }) {
+    return FlowBlockModel(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      type: type ?? this.type,
+      position: position ?? this.position,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      circleRadius: circleRadius ?? this.circleRadius,
+      cornerRadius: cornerRadius ?? this.cornerRadius,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      textColor: textColor ?? this.textColor,
+      icon: icon ?? this.icon,
+      tags: tags ?? this.tags,
     );
   }
 }

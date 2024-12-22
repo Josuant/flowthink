@@ -27,13 +27,6 @@ class FlowBlock {
   final Color backgroundColor;
   final Color textColor;
   final Icon icon;
-  final bool isSelected;
-  final bool isHovered;
-  final bool isEditing;
-  final bool isDragging;
-  final bool isAnimating;
-  final bool isLocked;
-  final bool isExpanded;
   final List<String> tags;
 
   FlowBlock({
@@ -48,13 +41,6 @@ class FlowBlock {
     required this.backgroundColor,
     required this.textColor,
     required this.icon,
-    required this.isSelected,
-    required this.isHovered,
-    required this.isEditing,
-    required this.isDragging,
-    required this.isAnimating,
-    required this.isLocked,
-    required this.isExpanded,
     required this.tags,
   });
 }

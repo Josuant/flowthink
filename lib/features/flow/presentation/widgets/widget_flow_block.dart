@@ -1,6 +1,5 @@
-import 'dart:ui';
-
 import 'package:flow/features/flow/domain/entities/flow_block_state.dart';
+import 'package:flow/features/flow/presentation/providers/flow_block_notifier.dart';
 import 'package:flow/features/flow/presentation/providers/flow_block_state_provider.dart';
 
 import 'package:flutter/material.dart';
@@ -22,19 +21,9 @@ class FlowBlock extends ConsumerWidget {
     this.animationDurationMs = 500,
     this.circleRadius = 10,
     required this.text,
-    required this.startEditing,
-    required this.isEditingNotifier,
     required this.type,
-    required this.onTextChanged,
+    required this.startEditing,
     required this.onCreateWidget,
-    required this.onDrag,
-    required this.onFinishDrag,
-    required this.onEditing,
-    required this.isOnAnimation,
-    required this.isInAnotherBlock,
-    required this.anotherBlockPosition,
-    required this.isDeleted,
-    required this.deletedDuration,
   });
 
   final double width;
@@ -45,18 +34,8 @@ class FlowBlock extends ConsumerWidget {
   final double circleRadius;
   final String text;
   final bool startEditing;
-  final ValueNotifier<bool> isEditingNotifier;
-  final ValueNotifier<bool> isOnAnimation;
   final FlowBlockType type;
-  final Function(String) onTextChanged;
   final Function(Offset, Offset) onCreateWidget;
-  final Function(Offset) onDrag;
-  final Function(Offset) onFinishDrag;
-  final Function() onEditing;
-  final bool isInAnotherBlock;
-  final Offset anotherBlockPosition;
-  final bool isDeleted;
-  final int deletedDuration;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,10 +48,7 @@ class FlowBlock extends ConsumerWidget {
     final state = ref.watch(flowContainerProvider(flowBlockArgs));
     final notifier = ref.read(flowContainerProvider(flowBlockArgs).notifier);
 
-    // Listen to the external ValueNotifier isEditingNotifier
-    // and update local editing state if needed.
-    // In real usage, you'd do this in a listener or a build method carefully.
-    if (!isEditingNotifier.value && state.isEditing) {
+    if (state.isEditing) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         notifier.setEditing(false);
         notifier.setLongPressDown(false);
@@ -80,13 +56,9 @@ class FlowBlock extends ConsumerWidget {
     }
 
     // Also handle the animation finishing logic
-    if (!isOnAnimation.value && state.globalPosition != position) {
+    if (state.isAnimating && state.globalPosition != position) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         notifier.setLongPressDown(false);
-        // Snap the global position to the widget's position
-        // if you want to re-sync them exactly.
-        // For example:
-        // notifier.setGlobalPosition(position);
       });
     }
 
@@ -101,10 +73,10 @@ class FlowBlock extends ConsumerWidget {
   Widget _buildAnimatedPositioned(
     BuildContext context,
     FlowBlockState state,
-    dynamic notifier, // FlowContainerNotifier
+    FlowBlockNotifier notifier, // FlowContainerNotifier
   ) {
     return AnimatedPositioned(
-      duration: isOnAnimation.value
+      duration: state.isAnimating
           ? Duration(milliseconds: animationDurationMs)
           : Duration.zero,
       curve: Curves.easeInOut,
@@ -137,26 +109,17 @@ class FlowBlock extends ConsumerWidget {
   Widget _buildFlowContainerContent(
     BuildContext context,
     FlowBlockState state,
-    dynamic notifier,
+    FlowBlockNotifier notifier,
   ) {
     return Stack(
       alignment: Alignment.center,
       children: [
         // The actual moving container with blur, text, etc.
-        AnimatedScale(
-          scale: isDeleted ? 1.2 : 1.0,
-          duration: Duration(milliseconds: deletedDuration),
-          child: AnimatedOpacity(
-            opacity: isDeleted ? 0.0 : 1.0,
-            duration: Duration(milliseconds: deletedDuration),
-            curve: Curves.easeInOut,
-            child: Stack(
-              children: [
-                _buildAnimatedContainer(context, state),
-                _buildDragIndicator(),
-              ],
-            ),
-          ),
+        Stack(
+          children: [
+            _buildAnimatedContainer(context, state, notifier),
+            _buildDragIndicator(),
+          ],
         ),
         // Gesture detectors
         _buildGestureDetectors(context, state, notifier),
@@ -164,7 +127,8 @@ class FlowBlock extends ConsumerWidget {
     );
   }
 
-  Widget _buildAnimatedContainer(BuildContext context, FlowBlockState state) {
+  Widget _buildAnimatedContainer(
+      BuildContext context, FlowBlockState state, FlowBlockNotifier notifier) {
     return AnimatedContainer(
       duration: Duration(milliseconds: animationDurationMs),
       curve: Curves.easeOut,
@@ -182,16 +146,11 @@ class FlowBlock extends ConsumerWidget {
         alignment: Alignment.center,
         duration: Duration(milliseconds: animationDurationMs),
         curve: Curves.easeOut,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: isDeleted ? 20.0 : 0.0,
-            sigmaY: isDeleted ? 20.0 : 0.0,
-          ),
-          child: IntrinsicWidth(
-            child: IntrinsicHeight(
-              child:
-                  state.isEditing ? _buildTextField(state) : _buildText(state),
-            ),
+        child: IntrinsicWidth(
+          child: IntrinsicHeight(
+            child: state.isEditing
+                ? _buildTextField(state, notifier)
+                : _buildText(state),
           ),
         ),
       ),
@@ -225,11 +184,11 @@ class FlowBlock extends ConsumerWidget {
     );
   }
 
-  Widget _buildTextField(FlowBlockState state) {
+  Widget _buildTextField(FlowBlockState state, FlowBlockNotifier notifier) {
     return TextField(
       controller: state.textController,
-      onChanged: onTextChanged,
-      onSubmitted: (_) => _setEditingWithNotifier(false),
+      onChanged: (text) => state.textController.text = text,
+      onSubmitted: (_) => notifier.setEditing(false),
       autofocus: true,
       textAlign: TextAlign.center,
       maxLines: null,
@@ -245,16 +204,11 @@ class FlowBlock extends ConsumerWidget {
     );
   }
 
-  // Using setState pattern to signal container to exit editing
-  void _setEditingWithNotifier(bool editing) {
-    isEditingNotifier.value = editing;
-  }
-
   // ----------------- Gesture Detectors -----------------
   Widget _buildGestureDetectors(
     BuildContext context,
     FlowBlockState state,
-    dynamic notifier,
+    FlowBlockNotifier notifier,
   ) {
     return Row(
       children: [
@@ -266,7 +220,7 @@ class FlowBlock extends ConsumerWidget {
             notifier.setLongPress(false);
             notifier.setLongPressDown(false);
             // Notify external about drag
-            onDrag(
+            notifier.setGlobalPosition(
               state.globalPosition.translate(
                 tapPos.dx - 5,
                 tapPos.dy - height / 2,
@@ -276,7 +230,7 @@ class FlowBlock extends ConsumerWidget {
           onPanEnd: (details) {
             notifier.setDragging(false);
             notifier.updateGlobalPosition(details.localPosition, height);
-            onFinishDrag(details.localPosition);
+            notifier.onFinishDrag(details.localPosition);
           },
           child: Container(
             width: width / 6,
@@ -415,11 +369,11 @@ class FlowBlock extends ConsumerWidget {
   }
 
   double _getPositionX(FlowBlockState state) {
-    return isOnAnimation.value ? position.dx : state.globalPosition.dx;
+    return state.isAnimating ? position.dx : state.globalPosition.dx;
   }
 
   double _getPositionY(FlowBlockState state) {
-    return isOnAnimation.value ? position.dy : state.globalPosition.dy;
+    return state.isAnimating ? position.dy : state.globalPosition.dy;
   }
 
   double _getDragPositionX(FlowBlockState state) {

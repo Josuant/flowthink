@@ -28,21 +28,14 @@ class FlowBlockModelAdapter extends TypeAdapter<FlowBlockModel> {
       backgroundColor: fields[8] as Color,
       textColor: fields[9] as Color,
       icon: fields[10] as Icon,
-      isSelected: fields[11] as bool,
-      isHovered: fields[12] as bool,
-      isEditing: fields[13] as bool,
-      isDragging: fields[14] as bool,
-      isAnimating: fields[15] as bool,
-      isLocked: fields[16] as bool,
-      isExpanded: fields[17] as bool,
-      tags: (fields[18] as List).cast<String>(),
+      tags: (fields[11] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, FlowBlockModel obj) {
     writer
-      ..writeByte(19)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -66,20 +59,6 @@ class FlowBlockModelAdapter extends TypeAdapter<FlowBlockModel> {
       ..writeByte(10)
       ..write(obj.icon)
       ..writeByte(11)
-      ..write(obj.isSelected)
-      ..writeByte(12)
-      ..write(obj.isHovered)
-      ..writeByte(13)
-      ..write(obj.isEditing)
-      ..writeByte(14)
-      ..write(obj.isDragging)
-      ..writeByte(15)
-      ..write(obj.isAnimating)
-      ..writeByte(16)
-      ..write(obj.isLocked)
-      ..writeByte(17)
-      ..write(obj.isExpanded)
-      ..writeByte(18)
       ..write(obj.tags);
   }
 
