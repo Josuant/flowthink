@@ -96,13 +96,6 @@ class FlowBlockModel {
     Color? backgroundColor,
     Color? textColor,
     Icon? icon,
-    bool? isSelected,
-    bool? isHovered,
-    bool? isEditing,
-    bool? isDragging,
-    bool? isAnimating,
-    bool? isLocked,
-    bool? isExpanded,
     List<String>? tags,
   }) {
     return FlowBlockModel(

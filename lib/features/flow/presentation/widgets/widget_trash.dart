@@ -1,15 +1,15 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-import '../../features/flow/presentation/flow_styles.dart';
+import '../flow_styles.dart';
 
 class WidgetTrash extends StatefulWidget {
   static final GlobalKey<_WidgetTrashState> globalKey = GlobalKey();
 
   const WidgetTrash({
     super.key,
-    required this.widgetSize,
-    required this.expandedSize,
+    this.widgetSize = 58,
+    this.expandedSize = 68,
     required this.initialPosition,
     required this.distanceThreshold,
     required this.outsideWidgetSize,

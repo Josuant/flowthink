@@ -1,14 +1,15 @@
+import 'package:flow/features/flow/domain/entities/flow_block.dart';
 import 'package:flutter/material.dart';
 
 /// Holds all mutable state for the FlowContainer.
 class FlowBlockState {
-  final String id;
+  final FlowBlock entity;
   final bool isLongPressDown;
   final bool isLongPress;
   final bool isEditing;
   final bool isDragging;
   final Offset? tapPosition;
-  final Offset globalPosition;
+  final Offset position;
   final Alignment buttonAlignment;
   final TextEditingController textController;
   final bool isSelected;
@@ -20,13 +21,13 @@ class FlowBlockState {
   final Offset? anotherBlockPosition;
 
   const FlowBlockState({
-    required this.id,
+    required this.entity,
     required this.isLongPressDown,
     required this.isLongPress,
     required this.isEditing,
     required this.isDragging,
     required this.tapPosition,
-    required this.globalPosition,
+    required this.position,
     required this.buttonAlignment,
     required this.textController,
     required this.isSelected,
@@ -39,13 +40,13 @@ class FlowBlockState {
   });
 
   FlowBlockState copyWith({
-    required String id,
+    required FlowBlock entity,
     bool? isLongPressDown,
     bool? isLongPress,
     bool? isEditing,
     bool? isDragging,
     Offset? tapPosition,
-    Offset? globalPosition,
+    Offset? position,
     Alignment? buttonAlignment,
     TextEditingController? textController,
     bool? isSelected,
@@ -57,13 +58,13 @@ class FlowBlockState {
     Offset? anotherBlockPosition,
   }) {
     return FlowBlockState(
-      id: id,
+      entity: entity,
       isLongPressDown: isLongPressDown ?? this.isLongPressDown,
       isLongPress: isLongPress ?? this.isLongPress,
       isEditing: isEditing ?? this.isEditing,
       isDragging: isDragging ?? this.isDragging,
       tapPosition: tapPosition ?? this.tapPosition,
-      globalPosition: globalPosition ?? this.globalPosition,
+      position: position ?? this.position,
       buttonAlignment: buttonAlignment ?? this.buttonAlignment,
       textController: textController ?? this.textController,
       isSelected: isSelected ?? this.isSelected,

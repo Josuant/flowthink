@@ -1,3 +1,5 @@
+import 'package:flow/core/utils/constants/ui_constants.dart';
+import 'package:flow/features/flow/utils/constants/flow_default_constants.dart';
 import 'package:flow/features/flow/utils/enums/flow_block_type.dart';
 import 'package:flutter/material.dart';
 
@@ -43,4 +45,26 @@ class FlowBlock {
     required this.icon,
     required this.tags,
   });
+
+  static buildDefault(String text, Offset position) {
+    return FlowBlock(
+      id: UniqueKey().toString(),
+      type: FlowBlockType.process,
+      text: text,
+      width: FlowDefaultConstants.flowBlockWidth,
+      height: FlowDefaultConstants.flowBlockHeight,
+      position: position,
+      circleRadius: FlowDefaultConstants.flowBlockCircleRadius,
+      cornerRadius: FlowDefaultConstants.flowBlockCornerRadius,
+      backgroundColor: AppColors.lightColor,
+      textColor: AppColors.darkColor,
+      icon: const Icon(
+        Icons.favorite,
+        color: Colors.pink,
+        size: 24.0,
+        semanticLabel: 'Text to announce in accessibility modes',
+      ),
+      tags: [],
+    );
+  }
 }

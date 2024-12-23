@@ -25,4 +25,7 @@ abstract class FlowDefaultConstants {
 
   /// The default delay before starting animations for flow blocks, in seconds.
   static const double flowBlockAnimationDelay = 0.1;
+
+  /// The default radius of circular elements in a flow block in logical pixels.
+  static var flowBlockCircleRadius = 2.0;
 }
