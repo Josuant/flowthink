@@ -20,6 +20,9 @@ abstract class FlowDefaultConstants {
   /// The default corner radius of a flow block in logical pixels.
   static const double flowBlockCornerRadius = 10.0;
 
+  /// The default selected corner radius of a flow block in logical pixels.
+  static const double flowBlockSelectedCornerRadius = 20.0;
+
   /// The default duration for animations related to flow blocks, in seconds.
   static const double flowBlockAnimationDuration = 0.5;
 
@@ -27,5 +30,7 @@ abstract class FlowDefaultConstants {
   static const double flowBlockAnimationDelay = 0.1;
 
   /// The default radius of circular elements in a flow block in logical pixels.
-  static var flowBlockCircleRadius = 2.0;
+  static const flowBlockCircleRadius = 2.0;
+
+  static const lineThickness = 2.0;
 }

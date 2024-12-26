@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 part 'package:flow/features/flow/domain/entities/grid_screen_state.dart'; // We'll define state in the same folder
 

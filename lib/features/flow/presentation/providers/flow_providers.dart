@@ -1,6 +1,6 @@
 // flow_providers.dart
-import 'package:flow/features/flow/data/models/flow_connection_model.dart';
 import 'package:flow/features/flow/domain/entities/flow_block_state.dart';
+import 'package:flow/features/flow/domain/entities/flow_connection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'flow_blocks_notifier.dart';
 import 'flow_connections_notifier.dart';
@@ -13,6 +13,6 @@ final flowBlocksProvider =
 
 // A provider for the list of FlowConnectionModel
 final flowConnectionsProvider =
-    StateNotifierProvider<FlowConnectionsNotifier, List<FlowConnectionModel>>(
+    StateNotifierProvider<FlowConnectionsNotifier, List<FlowConnection>>(
   (ref) => FlowConnectionsNotifier(),
 );

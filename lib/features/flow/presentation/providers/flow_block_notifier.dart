@@ -13,7 +13,6 @@ class FlowBlockNotifier extends StateNotifier<FlowBlockState> {
           FlowBlockState(
             entity: entity,
             isLongPressDown: false,
-            isLongPress: false,
             isEditing: startEditing,
             isDragging: false,
             tapPosition: null,
@@ -25,8 +24,6 @@ class FlowBlockNotifier extends StateNotifier<FlowBlockState> {
             isAnimating: false,
             isLocked: false,
             isExpanded: false,
-            isInAnotherBlock: false,
-            anotherBlockPosition: Offset.zero,
           ),
         );
 }

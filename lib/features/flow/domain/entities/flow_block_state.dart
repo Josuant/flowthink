@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 class FlowBlockState {
   final FlowBlock entity;
   final bool isLongPressDown;
-  final bool isLongPress;
   final bool isEditing;
   final bool isDragging;
   final Offset? tapPosition;
@@ -17,32 +16,28 @@ class FlowBlockState {
   final bool isAnimating;
   final bool isLocked;
   final bool isExpanded;
-  final bool? isInAnotherBlock;
-  final Offset? anotherBlockPosition;
+  final bool? isPanUpdating;
 
   const FlowBlockState({
     required this.entity,
-    required this.isLongPressDown,
-    required this.isLongPress,
-    required this.isEditing,
-    required this.isDragging,
-    required this.tapPosition,
     required this.position,
-    required this.buttonAlignment,
+    this.buttonAlignment = Alignment.centerLeft,
+    this.isLongPressDown = false,
+    this.isEditing = false,
+    this.isDragging = false,
+    this.tapPosition = Offset.zero,
     required this.textController,
-    required this.isSelected,
-    required this.isHovered,
-    required this.isAnimating,
-    required this.isLocked,
-    required this.isExpanded,
-    required this.isInAnotherBlock,
-    required this.anotherBlockPosition,
+    this.isSelected = false,
+    this.isHovered = false,
+    this.isAnimating = false,
+    this.isLocked = false,
+    this.isExpanded = false,
+    this.isPanUpdating,
   });
 
   FlowBlockState copyWith({
     required FlowBlock entity,
     bool? isLongPressDown,
-    bool? isLongPress,
     bool? isEditing,
     bool? isDragging,
     Offset? tapPosition,
@@ -55,12 +50,12 @@ class FlowBlockState {
     bool? isLocked,
     bool? isExpanded,
     bool? isInAnotherBlock,
+    bool? isPanUpdating,
     Offset? anotherBlockPosition,
   }) {
     return FlowBlockState(
       entity: entity,
       isLongPressDown: isLongPressDown ?? this.isLongPressDown,
-      isLongPress: isLongPress ?? this.isLongPress,
       isEditing: isEditing ?? this.isEditing,
       isDragging: isDragging ?? this.isDragging,
       tapPosition: tapPosition ?? this.tapPosition,
@@ -72,8 +67,7 @@ class FlowBlockState {
       isAnimating: isAnimating ?? this.isAnimating,
       isLocked: isLocked ?? this.isLocked,
       isExpanded: isExpanded ?? this.isExpanded,
-      isInAnotherBlock: isInAnotherBlock,
-      anotherBlockPosition: anotherBlockPosition,
+      isPanUpdating: isPanUpdating ?? this.isPanUpdating,
     );
   }
 }

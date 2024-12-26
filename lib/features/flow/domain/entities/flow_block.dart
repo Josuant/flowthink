@@ -46,7 +46,7 @@ class FlowBlock {
     required this.tags,
   });
 
-  static buildDefault(String text, Offset position) {
+  static FlowBlock buildDefault(String text, Offset position) {
     return FlowBlock(
       id: UniqueKey().toString(),
       type: FlowBlockType.process,

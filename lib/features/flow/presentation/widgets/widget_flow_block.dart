@@ -4,29 +4,35 @@ import 'package:flutter/material.dart';
 
 class FlowBlockWidget extends StatelessWidget {
   final FlowBlockState state;
-  final Function(Offset) onStartDrag;
-  final Function(Offset) onDrag;
-  final Function(Offset) onFinishDrag;
-  final Function() onStartEditing;
-  final Function(String) onEditing;
-  final Function(String) onFinishEditing;
+  final Function(Offset)? onLongPressDown;
+  final Function(Offset)? onStartDrag;
+  final Function(Offset)? onDrag;
+  final Function(Offset)? onFinishDrag;
+  final Function()? onStartEditing;
+  final Function(String)? onEditing;
+  final Function(String)? onFinishEditing;
+  final Function(Offset)? onPanUpdate;
+  final Function(Offset)? onPanEnd;
 
   const FlowBlockWidget({
     super.key,
     required this.state,
-    required this.onStartDrag,
-    required this.onDrag,
-    required this.onFinishDrag,
-    required this.onStartEditing,
-    required this.onEditing,
-    required this.onFinishEditing,
+    this.onLongPressDown,
+    this.onStartDrag,
+    this.onDrag,
+    this.onFinishDrag,
+    this.onStartEditing,
+    this.onEditing,
+    this.onFinishEditing,
+    this.onPanUpdate,
+    this.onPanEnd,
   });
 
   @override
   Widget build(BuildContext context) {
     return AnimatedPositioned(
-      left: state.position.dx,
-      top: state.position.dy,
+      left: state.position.dx - state.entity.width / 2,
+      top: state.position.dy - state.entity.height / 2,
       duration: const Duration(milliseconds: 50),
       child: _buildFlowContainerContent(),
     );
@@ -46,7 +52,7 @@ class FlowBlockWidget extends StatelessWidget {
 
   Widget _buildAnimatedContainer() {
     return AnimatedContainer(
-      duration: Duration(milliseconds: 50),
+      duration: Duration(milliseconds: 400),
       curve: Curves.easeOut,
       width: state.entity.width,
       height: state.entity.height,
@@ -59,14 +65,9 @@ class FlowBlockWidget extends StatelessWidget {
       padding:
           EdgeInsets.symmetric(horizontal: state.entity.width / 6, vertical: 4),
       alignment: Alignment.center,
-      child: AnimatedContainer(
-        alignment: Alignment.center,
-        duration: Duration(milliseconds: 50),
-        curve: Curves.easeOut,
-        child: IntrinsicWidth(
-          child: IntrinsicHeight(
-            child: state.isEditing ? _buildTextField() : _buildText(),
-          ),
+      child: IntrinsicWidth(
+        child: IntrinsicHeight(
+          child: state.isEditing ? _buildTextField() : _buildText(),
         ),
       ),
     );
@@ -87,8 +88,8 @@ class FlowBlockWidget extends StatelessWidget {
   Widget _buildTextField() {
     return TextField(
       controller: state.textController,
-      onChanged: (text) => onEditing(text),
-      onSubmitted: (text) => onFinishEditing(text),
+      onChanged: (text) => onEditing!(text),
+      onSubmitted: (text) => onFinishEditing!(text),
       autofocus: true,
       textAlign: TextAlign.center,
       maxLines: null,
@@ -107,14 +108,13 @@ class FlowBlockWidget extends StatelessWidget {
   // ----------------- Gesture Detectors -----------------
   Widget _buildGestureDetectors() {
     return GestureDetector(
-      onLongPressDown: (details) {},
-      onLongPressStart: (details) => onStartDrag(details.globalPosition),
-      onLongPressEnd: (details) => onFinishDrag(details.globalPosition),
-      onLongPressMoveUpdate: (details) => onDrag(details.globalPosition),
-      onLongPressCancel: () => {},
-      onPanUpdate: (details) {},
-      onPanEnd: (details) {},
-      onDoubleTap: () => onStartEditing(),
+      onLongPressDown: (details) => onLongPressDown!(details.globalPosition),
+      onLongPressStart: (details) => onStartDrag!(details.globalPosition),
+      onLongPressMoveUpdate: (details) => onDrag!(details.globalPosition),
+      onLongPressEnd: (details) => onFinishDrag!(details.globalPosition),
+      onPanUpdate: (details) => onPanUpdate!(details.globalPosition),
+      onPanEnd: (details) => onPanEnd!(details.globalPosition),
+      onDoubleTap: () => onStartEditing!(),
       child: Container(
         width: (state.entity.width) + 10.0,
         height: state.entity.height + 10.0,

@@ -40,7 +40,7 @@ class _AnimatedDashedLineState extends State<AnimatedDashedLine>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300), // Duración de 300 ms
+      duration: const Duration(milliseconds: 500), // Duración de 300 ms
     );
 
     _initializeAnimations();

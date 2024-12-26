@@ -1,3 +1,4 @@
+import 'package:flow/features/flow/utils/constants/flow_default_constants.dart';
 import 'package:flutter/material.dart';
 
 class FlowStyles {
@@ -42,7 +43,9 @@ class FlowStyles {
             isLongPressDown || isEditing ? Colors.purple : Colors.transparent,
         width: isLongPressDown || isEditing ? 2.0 : 0.0,
       ),
-      borderRadius: BorderRadius.circular(isLongPressDown ? 20 : cornerRadius),
+      borderRadius: BorderRadius.circular(isLongPressDown
+          ? FlowDefaultConstants.flowBlockSelectedCornerRadius
+          : cornerRadius),
       boxShadow: isUnion
           ? []
           : isLongPressDown

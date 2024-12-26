@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:flow/core/utils/constants/ui_constants.dart';
+import 'package:flow/features/flow/utils/constants/flow_default_constants.dart';
 import 'package:flow/features/flow/utils/enums/flow_connection_direction.dart';
 
 /// Represents a connection between two flows in a flow diagram.
@@ -57,4 +59,48 @@ class FlowConnection {
       required this.cornerRadius,
       required this.label,
       required this.labelPosition});
+
+  // Copywith method
+  FlowConnection copyWith({
+    String? flowIdA,
+    String? flowIdB,
+    FlowConnectionDirection? flowConnectionDirectionA,
+    FlowConnectionDirection? flowConnectionDirectionB,
+    Color? color,
+    bool? isDotted,
+    double? thickness,
+    double? cornerRadius,
+    String? label,
+    double? labelPosition,
+  }) {
+    return FlowConnection(
+      flowIdA: flowIdA ?? this.flowIdA,
+      flowIdB: flowIdB ?? this.flowIdB,
+      flowConnectionDirectionA:
+          flowConnectionDirectionA ?? this.flowConnectionDirectionA,
+      flowConnectionDirectionB:
+          flowConnectionDirectionB ?? this.flowConnectionDirectionB,
+      color: color ?? this.color,
+      isDotted: isDotted ?? this.isDotted,
+      thickness: thickness ?? this.thickness,
+      cornerRadius: cornerRadius ?? this.cornerRadius,
+      label: label ?? this.label,
+      labelPosition: labelPosition ?? this.labelPosition,
+    );
+  }
+
+  static FlowConnection buildDefault(String flowIdA, String flowIdB) {
+    return FlowConnection(
+      flowIdA: flowIdA,
+      flowIdB: flowIdB,
+      flowConnectionDirectionA: FlowConnectionDirection.nearest,
+      flowConnectionDirectionB: FlowConnectionDirection.nearest,
+      color: AppColors.primaryColor,
+      isDotted: false,
+      thickness: FlowDefaultConstants.lineThickness,
+      cornerRadius: FlowDefaultConstants.flowBlockCircleRadius,
+      label: '',
+      labelPosition: 0.5,
+    );
+  }
 }

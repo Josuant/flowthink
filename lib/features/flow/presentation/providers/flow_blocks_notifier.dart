@@ -1,5 +1,6 @@
 import 'package:flow/features/flow/domain/entities/flow_block.dart';
 import 'package:flow/features/flow/domain/entities/flow_block_state.dart';
+import 'package:flow/features/flow/utils/constants/flow_default_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,21 +13,8 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
       ...state,
       FlowBlockState(
         entity: entity,
-        isLongPressDown: false,
-        isLongPress: false,
-        isEditing: false,
-        isDragging: false,
-        tapPosition: null,
         position: entity.position,
-        buttonAlignment: Alignment.centerLeft,
         textController: TextEditingController(text: entity.text),
-        isSelected: false,
-        isHovered: false,
-        isAnimating: false,
-        isLocked: false,
-        isExpanded: false,
-        isInAnotherBlock: false,
-        anotherBlockPosition: Offset.zero,
       )
     ];
   }
@@ -90,7 +78,6 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
       if (block.entity.id == id) {
         return block.copyWith(
             isLongPressDown: value,
-            isLongPress: value ? block.isLongPress : false,
             tapPosition: localPosition ?? block.tapPosition,
             entity: block.entity);
       }
@@ -107,21 +94,20 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
     }).toList();
   }
 
-  // Toggle or set isLongPress
-  void setLongPress(bool value, String id) {
-    state = state.map((block) {
-      if (block.entity.id == id) {
-        return block.copyWith(isLongPress: value, entity: block.entity);
-      }
-      return block;
-    }).toList();
-  }
-
   // Toggle editing
   void setEditing(bool value, String id) {
     state = state.map((block) {
       if (block.entity.id == id) {
         return block.copyWith(isEditing: value, entity: block.entity);
+      }
+      return block;
+    }).toList();
+  }
+
+  void setPanUpdating(bool value, String id) {
+    state = state.map((block) {
+      if (block.entity.id == id) {
+        return block.copyWith(isPanUpdating: value, entity: block.entity);
       }
       return block;
     }).toList();
@@ -202,7 +188,6 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
       }
       return block;
     }).toList();
-    veryfyCollisions(tapPosition);
   }
 
   void onEditing(id) {}
@@ -215,10 +200,6 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
 
   bool isAnyEditing() {
     return state.any((block) => block.isEditing);
-  }
-
-  bool isAnyLongPress() {
-    return state.any((block) => block.isLongPress);
   }
 
   bool isAnyLongPressDown() {
@@ -245,10 +226,6 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
     return state.any((block) => block.isSelected);
   }
 
-  bool isAnyCollision() {
-    return state.any((block) => block.isInAnotherBlock ?? false);
-  }
-
   Offset? getTapPosition() {
     return state.firstWhere((block) => block.tapPosition != null).tapPosition;
   }
@@ -257,29 +234,150 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
     return state.firstWhere((block) => block.entity.id == id).tapPosition!;
   }
 
-  FlowBlockState getCollisionBlock() {
-    return state.firstWhere((block) => block.isInAnotherBlock == true);
-  }
-
   Offset getDraggingPosition() {
     return state.firstWhere((block) => block.isDragging).position;
   }
 
-  void veryfyCollisions(Offset position) {
-    state = state.map((block) {
-      if (block.position.dx < position.dx &&
-          block.position.dx + 100 > position.dx &&
-          block.position.dy < position.dy &&
-          block.position.dy + 100 > position.dy) {
-        return block.copyWith(isInAnotherBlock: true, entity: block.entity);
-      }
-      return block.copyWith(isInAnotherBlock: false, entity: block.entity);
-    }).toList();
+  Offset getPanningPosition() {
+    var panning = state.firstWhere((block) => block.isPanUpdating ?? false);
+    return panning.tapPosition ?? panning.position;
   }
 
   void setAllEditingFalse() {
     state = state.map((block) {
       return block.copyWith(isEditing: false, entity: block.entity);
     }).toList();
+  }
+
+  void setAllLongPressDownFalse() {
+    state = state.map((block) {
+      return block.copyWith(isLongPressDown: false, entity: block.entity);
+    }).toList();
+  }
+
+  void setOthersLongPressDownFalse(String id) {
+    state = state.map((block) {
+      if (block.entity.id != id) {
+        return block.copyWith(isLongPressDown: false, entity: block.entity);
+      }
+      return block;
+    }).toList();
+  }
+
+  isAnyPanUpdating() {
+    return state.any((block) => block.isPanUpdating ?? false);
+  }
+
+  void setTapPosition(Offset position, String id) {
+    state = state.map((block) {
+      if (block.entity.id == id) {
+        return block.copyWith(tapPosition: position, entity: block.entity);
+      }
+      return block;
+    }).toList();
+  }
+
+  //Get the Rect area of the block
+  Rect getBlockRect(String id) {
+    final block = state.firstWhere((block) => block.entity.id == id);
+    return Rect.fromLTWH(
+      block.position.dx - block.entity.width / 2,
+      block.position.dy - block.entity.height / 2,
+      block.entity.width,
+      block.entity.height,
+    );
+  }
+
+  //Get the default Rect area of a tap position
+  Rect getTapPositionRect(Offset tapPosition) {
+    return Rect.fromLTWH(
+      tapPosition.dx - FlowDefaultConstants.flowBlockWidth / 2,
+      tapPosition.dy - FlowDefaultConstants.flowBlockHeight / 2,
+      FlowDefaultConstants.flowBlockWidth,
+      FlowDefaultConstants.flowBlockHeight,
+    );
+  }
+
+  //Check if the Dragging block is colliding with any other block
+  bool isDraggingColliding() {
+    final draggingBlock = getDraggingBlock();
+    return isBlockColliding(draggingBlock);
+  }
+
+  // Check if the Pan Updating block tap position is colliding with any other block
+  bool isPanUpdatingTapPositionColliding() {
+    final panUpdatingBlock =
+        state.firstWhere((block) => block.isPanUpdating ?? false);
+    return state.any((block) {
+      if (block.entity.id != panUpdatingBlock.entity.id) {
+        final blockRect = getBlockRect(block.entity.id);
+        return blockRect
+            .overlaps(getTapPositionRect(panUpdatingBlock.tapPosition!));
+      }
+      return false;
+    });
+  }
+
+  // Check if the Pan Updating block tap position is colliding with itself
+  bool isPanUpdatingTapPositionCollidingWithItself() {
+    final panUpdatingBlock =
+        state.firstWhere((block) => block.isPanUpdating ?? false);
+    final panUpdatingBlockRect = getBlockRect(panUpdatingBlock.entity.id);
+    return panUpdatingBlockRect
+        .overlaps(getTapPositionRect(panUpdatingBlock.tapPosition!));
+  }
+
+  // Check if a certain block is colliding with another block
+  bool isBlockColliding(FlowBlockState blockA) {
+    final blockARect = getBlockRect(blockA.entity.id);
+    return state.any((block) {
+      if (block.entity.id != blockA.entity.id) {
+        final blockRect = getBlockRect(block.entity.id);
+        return blockARect.overlaps(blockRect);
+      }
+      return false;
+    });
+  }
+
+  // Check if any block is colliding with another block
+  bool isAnyBlockColliding() {
+    return state.any((block) => isBlockColliding(block));
+  }
+
+  // Get the block that is currently being dragged
+  FlowBlockState getDraggingBlock() {
+    return state.firstWhere((block) => block.isDragging);
+  }
+
+  // Get the block that is currently being Pan Updating
+  FlowBlockState getPanUpdatingBlock() {
+    return state.firstWhere((block) => block.isPanUpdating ?? false);
+  }
+
+  // Get the block that is currently being Pan Updating and colliding with the tap position
+  FlowBlockState getPanUpdatingCollidingBlock() {
+    final panUpdatingBlock =
+        state.firstWhere((block) => block.isPanUpdating ?? false);
+    return state.firstWhere((block) {
+      if (block.entity.id != panUpdatingBlock.entity.id) {
+        final blockRect = getBlockRect(block.entity.id);
+        return blockRect
+            .overlaps(getTapPositionRect(panUpdatingBlock.tapPosition!));
+      }
+      return false;
+    });
+  }
+
+  // Get the block that is currently being dragged and colliding with another block
+  FlowBlockState getDraggingCollidingBlock() {
+    final draggingBlock = getDraggingBlock();
+    return state.firstWhere((block) {
+      if (block.entity.id != draggingBlock.entity.id) {
+        final blockARect = getBlockRect(draggingBlock.entity.id);
+        final blockRect = getBlockRect(block.entity.id);
+        return blockARect.overlaps(blockRect);
+      }
+      return false;
+    });
   }
 }
