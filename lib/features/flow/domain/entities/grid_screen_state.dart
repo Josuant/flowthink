@@ -1,4 +1,4 @@
-part of 'package:flow/features/flow/presentation/providers/grid_screen_notifier.dart';
+part of 'package:flow/features/flow/presentation/notifiers/grid_screen_notifier.dart';
 
 class GridScreenState {
   // Basic data

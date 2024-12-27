@@ -1,6 +1,6 @@
 import 'package:flow/features/flow/domain/entities/flow_block.dart';
 import 'package:flow/features/flow/domain/entities/flow_block_state.dart';
-import 'package:flow/features/flow/presentation/providers/flow_block_notifier.dart';
+import 'package:flow/features/flow/presentation/notifiers/flow_block_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 

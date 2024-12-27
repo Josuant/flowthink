@@ -1,87 +1,33 @@
 import 'dart:ui';
+import 'package:flow/features/flow/domain/entities/trash_state.dart';
 import 'package:flutter/material.dart';
 
 import '../flow_styles.dart';
 
 class WidgetTrash extends StatefulWidget {
-  static final GlobalKey<_WidgetTrashState> globalKey = GlobalKey();
-
   const WidgetTrash({
     super.key,
-    this.widgetSize = 58,
-    this.expandedSize = 68,
-    required this.initialPosition,
-    required this.distanceThreshold,
-    required this.outsideWidgetSize,
-    required this.isTrashVisible,
+    required this.state,
   });
 
-  final double widgetSize;
-  final double expandedSize;
-  final Offset initialPosition;
-  final double distanceThreshold;
-  final double outsideWidgetSize;
-  final bool isTrashVisible;
+  final TrashState state;
 
   @override
-  _WidgetTrashState createState() => _WidgetTrashState();
+  WidgetTrashState createState() => WidgetTrashState();
 }
 
-class _WidgetTrashState extends State<WidgetTrash> {
-  late Offset _currentPosition;
-  late Rect _influenceZone;
-  bool _isNear = false;
-  bool get isNear => _isNear;
-
+class WidgetTrashState extends State<WidgetTrash> {
   @override
   void initState() {
     super.initState();
-    _currentPosition = widget.isTrashVisible
-        ? widget.initialPosition
-        : Offset(widget.initialPosition.dx,
-            widget.initialPosition.dy + 100); // Oculto
-    _updateInfluenceZone();
-  }
-
-  void _updateInfluenceZone() {
-    _influenceZone = Rect.fromLTWH(
-      widget.initialPosition.dx - widget.distanceThreshold,
-      widget.initialPosition.dy - widget.distanceThreshold,
-      widget.expandedSize + widget.distanceThreshold,
-      widget.expandedSize / 2 + widget.distanceThreshold,
-    );
-  }
-
-  @override
-  void didUpdateWidget(covariant WidgetTrash oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _updateInfluenceZone();
-  }
-
-  /// Método público para recibir avisos de otros widgets
-  void notifyProximity(Offset touchPosition) {
-    if (!mounted || !widget.isTrashVisible) {
-      return; // Evitar si no está montado o visible
-    }
-    setState(() {
-      _isNear = _influenceZone.contains(touchPosition);
-      if (_isNear) {
-        _currentPosition = touchPosition -
-            Offset(
-              widget.expandedSize / 2,
-              widget.expandedSize / 4 - widget.outsideWidgetSize / 2,
-            );
-      } else {
-        _currentPosition = widget.initialPosition;
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final Offset targetPosition = widget.isTrashVisible
-        ? _currentPosition
-        : Offset(widget.initialPosition.dx, widget.initialPosition.dy + 20);
+    final Offset targetPosition = widget.state.isVisible
+        ? widget.state.currentPosition
+        : Offset(widget.state.initialPosition.dx,
+            widget.state.initialPosition.dy + 20);
 
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 600),
@@ -90,7 +36,7 @@ class _WidgetTrashState extends State<WidgetTrash> {
       curve: Curves.elasticOut,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 600),
-        opacity: widget.isTrashVisible ? 1.0 : 0.0,
+        opacity: widget.state.isVisible ? 1.0 : 0.0,
         curve: Curves.elasticOut,
         child: Stack(
           alignment: Alignment.center,
@@ -104,17 +50,26 @@ class _WidgetTrashState extends State<WidgetTrash> {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.1), // Color translúcido
                   ),
-                  width: _isNear ? widget.expandedSize : widget.widgetSize,
-                  height:
-                      (_isNear ? widget.expandedSize : widget.widgetSize) / 2,
+                  width: widget.state.isBlockNear
+                      ? widget.state.expandedSize
+                      : widget.state.widgetSize,
+                  height: (widget.state.isBlockNear
+                          ? widget.state.expandedSize
+                          : widget.state.widgetSize) /
+                      2,
                 ),
               ),
             ),
             // Contenido del widget
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: _isNear ? widget.expandedSize : widget.widgetSize,
-              height: (_isNear ? widget.expandedSize : widget.widgetSize) / 2,
+              width: widget.state.isBlockNear
+                  ? widget.state.expandedSize
+                  : widget.state.widgetSize,
+              height: (widget.state.isBlockNear
+                      ? widget.state.expandedSize
+                      : widget.state.widgetSize) /
+                  2,
               clipBehavior: Clip.antiAlias,
               decoration: ShapeDecoration(
                 color: const Color(0x4CDC6D6F),

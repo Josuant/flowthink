@@ -1,17 +1,25 @@
+import 'package:flow/features/flow/presentation/widgets/widget_grid.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:flow/core/widgets/animated_dashed_line.dart';
 import 'package:flow/core/widgets/xml_input.dart';
+
 import 'package:flow/features/flow/domain/entities/flow_block.dart';
 import 'package:flow/features/flow/domain/entities/flow_block_state.dart';
 import 'package:flow/features/flow/domain/entities/flow_connection.dart';
-import 'package:flow/features/flow/presentation/providers/flow_blocks_notifier.dart';
-import 'package:flow/features/flow/presentation/providers/flow_connections_notifier.dart';
+import 'package:flow/features/flow/domain/entities/trash_state.dart';
+
 import 'package:flow/features/flow/presentation/widgets/widget_flow_block.dart';
 import 'package:flow/features/flow/presentation/widgets/widget_flow_static_block.dart';
 import 'package:flow/features/flow/presentation/widgets/widget_trash.dart';
 import 'package:flow/features/flow/presentation/widgets/widget_union_indicator.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flow/features/flow/presentation/providers/grid_screen_notifier.dart';
+
+import 'package:flow/features/flow/presentation/notifiers/flow_blocks_notifier.dart';
+import 'package:flow/features/flow/presentation/notifiers/flow_connections_notifier.dart';
+import 'package:flow/features/flow/presentation/notifiers/trash_notifier.dart';
+import 'package:flow/features/flow/presentation/notifiers/grid_screen_notifier.dart';
+
 import 'package:flow/features/flow/presentation/providers/flow_providers.dart';
 
 class FlowPage extends ConsumerWidget {
@@ -20,7 +28,7 @@ class FlowPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(gridScreenProvider);
+    final gridState = ref.watch(gridScreenProvider);
 
     final blocks = ref.watch(flowBlocksProvider);
     final blocksNotifier = ref.read(flowBlocksProvider.notifier);
@@ -28,7 +36,11 @@ class FlowPage extends ConsumerWidget {
     final connections = ref.watch(flowConnectionsProvider);
     final connectionsNotifier = ref.read(flowConnectionsProvider.notifier);
 
+    final TrashState trashState = ref.watch(trashProvider);
+    final TrashNotifier trashNotifier = ref.read(trashProvider.notifier);
+
     final screenSize = MediaQuery.of(context).size;
+
     final trashInitialPosition = Offset(
       screenSize.width / 2 - 50 / 2,
       screenSize.height - 250,
@@ -45,7 +57,7 @@ class FlowPage extends ConsumerWidget {
                 minScale: 0.5,
                 maxScale: 3.0,
                 constrained: false,
-                transformationController: state.transformationController,
+                transformationController: gridState.transformationController,
                 child: Container(
                   width: 2000,
                   height: 2000,
@@ -54,6 +66,7 @@ class FlowPage extends ConsumerWidget {
                   ),
                   child: Stack(children: [
                     // 1.1) Background grid
+                    const GridWidget(size: Size(2000, 2000)),
                     GestureDetector(
                       behavior: HitTestBehavior.translucent,
                       onTapDown: (position) =>
@@ -91,25 +104,36 @@ class FlowPage extends ConsumerWidget {
                           state: block,
                           onDrag: (position) {
                             blocksNotifier.onDrag(
-                                state.transformationController
+                                gridState.transformationController
                                     .toScene(position),
                                 id);
+                            trashNotifier.updateCurrentPosition(position);
                           },
                           onFinishDrag: (position) {
-                            if (blocksNotifier.isDraggingColliding()) {
+                            if (trashNotifier.veryfyProximity(position)) {
+                              blocksNotifier.removeBlock(id);
+                              connectionsNotifier
+                                  .removeConnectionsByBlockId(id);
+                            } else if (blocksNotifier.isDraggingColliding()) {
                               final collidingBlock =
                                   blocksNotifier.getDraggingCollidingBlock();
                               blocksNotifier.combineBlocks(
                                   id, collidingBlock.entity.id);
                               connectionsNotifier.mergeConnections(
                                   id, collidingBlock.entity.id);
+
+                              blocksNotifier.setLongPressDown(false, id);
+                              blocksNotifier.setDragging(false, id);
+                            } else {
+                              blocksNotifier.onFinishDrag(
+                                  id,
+                                  gridState.transformationController
+                                      .toScene(position));
+
+                              blocksNotifier.setLongPressDown(false, id);
+                              blocksNotifier.setDragging(false, id);
                             }
-                            blocksNotifier.onFinishDrag(
-                                id,
-                                state.transformationController
-                                    .toScene(position));
-                            blocksNotifier.setLongPressDown(false, id);
-                            blocksNotifier.setDragging(false, id);
+                            trashNotifier.setVisibility(false);
                           },
                           onEditing: (text) {
                             blocksNotifier.onEditing(id);
@@ -118,11 +142,16 @@ class FlowPage extends ConsumerWidget {
                           onStartDrag: (position) {
                             blocksNotifier.setAllEditingFalse();
                             blocksNotifier.onDrag(
-                                state.transformationController
+                                gridState.transformationController
                                     .toScene(position),
                                 id);
                             blocksNotifier.setDragging(true, id);
                             blocksNotifier.setPanUpdating(false, id);
+
+                            trashNotifier
+                                .setInitialPosition(trashInitialPosition);
+                            trashNotifier.setVisibility(true);
+                            trashNotifier.updateCurrentPosition(position);
                           },
                           onStartEditing: () {
                             blocksNotifier.setAllEditingFalse();
@@ -136,14 +165,14 @@ class FlowPage extends ConsumerWidget {
                           onPanUpdate: (position) {
                             blocksNotifier.setPanUpdating(true, id);
                             blocksNotifier.setTapPosition(
-                                state.transformationController
+                                gridState.transformationController
                                     .toScene(position),
                                 id);
                           },
                           onPanEnd: (position) {
                             _onPanEndHandler(
                                 blocksNotifier,
-                                state.transformationController
+                                gridState.transformationController
                                     .toScene(position),
                                 connectionsNotifier,
                                 id);
@@ -199,15 +228,10 @@ class FlowPage extends ConsumerWidget {
                   child: const Icon(Icons.add),
                 ),
               ),
-
               // 1.4) Trash widget
               WidgetTrash(
-                key: WidgetTrash.globalKey,
-                initialPosition: trashInitialPosition,
-                distanceThreshold: 50,
-                outsideWidgetSize: 100,
-                isTrashVisible: blocksNotifier.isAnyDragging(),
-              )
+                state: trashState,
+              ),
             ],
           ),
         ],
