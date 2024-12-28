@@ -6,7 +6,7 @@
 /// appearance and behavior of flow blocks.
 abstract class FlowDefaultConstants {
   /// The default height of a flow block in logical pixels.
-  static const double flowBlockHeight = 60.0;
+  static const double flowBlockHeight = 55.0;
 
   /// The default width of a flow block in logical pixels.
   static const double flowBlockWidth = 150.0;
@@ -15,13 +15,13 @@ abstract class FlowDefaultConstants {
   static const double flowBlockMargin = 10.0;
 
   /// The default padding inside a flow block in logical pixels.
-  static const double flowBlockPadding = 15.0;
+  static const double flowBlockPadding = 10.0;
 
   /// The default corner radius of a flow block in logical pixels.
-  static const double flowBlockCornerRadius = 10.0;
+  static const double flowBlockCornerRadius = 20.0;
 
   /// The default selected corner radius of a flow block in logical pixels.
-  static const double flowBlockSelectedCornerRadius = 20.0;
+  static const double flowBlockSelectedCornerRadius = 25.0;
 
   /// The default duration for animations related to flow blocks, in seconds.
   static const double flowBlockAnimationDuration = 0.5;

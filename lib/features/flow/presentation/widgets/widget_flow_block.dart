@@ -1,6 +1,8 @@
+import 'package:flow/core/utils/constants/ui_constants.dart';
 import 'package:flow/features/flow/domain/entities/flow_block_state.dart';
 import 'package:flow/features/flow/presentation/flow_styles.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class FlowBlockWidget extends StatelessWidget {
   final FlowBlockState state;
@@ -78,9 +80,9 @@ class FlowBlockWidget extends StatelessWidget {
     return Text(
       state.textController.text,
       textAlign: TextAlign.center,
-      style: const TextStyle(
-        fontSize: 16.0,
-        color: Color.fromARGB(255, 0, 0, 0),
+      style: GoogleFonts.baiJamjuree(
+        fontSize: 18.0,
+        color: AppColors.textColor,
       ),
     );
   }
@@ -98,9 +100,9 @@ class FlowBlockWidget extends StatelessWidget {
         isDense: true,
         contentPadding: EdgeInsets.all(8),
       ),
-      style: const TextStyle(
-        fontSize: 16.0,
-        color: Colors.black,
+      style: GoogleFonts.baiJamjuree(
+        fontSize: 18.0,
+        color: AppColors.textColor,
       ),
     );
   }

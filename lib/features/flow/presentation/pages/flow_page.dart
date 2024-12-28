@@ -14,20 +14,23 @@ import 'package:flow/features/flow/presentation/widgets/widget_flow_block.dart';
 import 'package:flow/features/flow/presentation/widgets/widget_flow_static_block.dart';
 import 'package:flow/features/flow/presentation/widgets/widget_trash.dart';
 import 'package:flow/features/flow/presentation/widgets/widget_union_indicator.dart';
-
-import 'package:flow/features/flow/presentation/notifiers/flow_blocks_notifier.dart';
-import 'package:flow/features/flow/presentation/notifiers/flow_connections_notifier.dart';
 import 'package:flow/features/flow/presentation/notifiers/trash_notifier.dart';
 import 'package:flow/features/flow/presentation/notifiers/grid_screen_notifier.dart';
 
 import 'package:flow/features/flow/presentation/providers/flow_providers.dart';
 
-class FlowPage extends ConsumerWidget {
+class FlowPage extends ConsumerStatefulWidget {
   const FlowPage({super.key, required this.title});
   final String title;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FlowPage> createState() => _FlowPageState();
+}
+
+class _FlowPageState extends ConsumerState<FlowPage>
+    with TickerProviderStateMixin {
+  @override
+  Widget build(BuildContext context) {
     final gridState = ref.watch(gridScreenProvider);
 
     final blocks = ref.watch(flowBlocksProvider);
@@ -110,30 +113,14 @@ class FlowPage extends ConsumerWidget {
                             trashNotifier.updateCurrentPosition(position);
                           },
                           onFinishDrag: (position) {
-                            if (trashNotifier.veryfyProximity(position)) {
-                              blocksNotifier.removeBlock(id);
-                              connectionsNotifier
-                                  .removeConnectionsByBlockId(id);
-                            } else if (blocksNotifier.isDraggingColliding()) {
-                              final collidingBlock =
-                                  blocksNotifier.getDraggingCollidingBlock();
-                              blocksNotifier.combineBlocks(
-                                  id, collidingBlock.entity.id);
-                              connectionsNotifier.mergeConnections(
-                                  id, collidingBlock.entity.id);
-
-                              blocksNotifier.setLongPressDown(false, id);
-                              blocksNotifier.setDragging(false, id);
-                            } else {
-                              blocksNotifier.onFinishDrag(
-                                  id,
-                                  gridState.transformationController
-                                      .toScene(position));
-
-                              blocksNotifier.setLongPressDown(false, id);
-                              blocksNotifier.setDragging(false, id);
-                            }
-                            trashNotifier.setVisibility(false);
+                            GridScreenNotifier.onDragEnd(
+                                id,
+                                position,
+                                gridState.transformationController
+                                    .toScene(position),
+                                trashNotifier,
+                                blocksNotifier,
+                                connectionsNotifier);
                           },
                           onEditing: (text) {
                             blocksNotifier.onEditing(id);
@@ -170,12 +157,13 @@ class FlowPage extends ConsumerWidget {
                                 id);
                           },
                           onPanEnd: (position) {
-                            _onPanEndHandler(
-                                blocksNotifier,
-                                gridState.transformationController
-                                    .toScene(position),
-                                connectionsNotifier,
-                                id);
+                            GridScreenNotifier.onPanEnd(
+                              id,
+                              gridState.transformationController
+                                  .toScene(position),
+                              blocksNotifier,
+                              connectionsNotifier,
+                            );
                           },
                         );
                       }).toList(),
@@ -219,12 +207,21 @@ class FlowPage extends ConsumerWidget {
                 onXmlSubmitted: (xml) {},
                 hintText: 'Escribe algo...',
               ),
-              // 3) Add block button
+              // 3) Simulate button
               Positioned(
                 bottom: 20,
                 right: 20,
                 child: FloatingActionButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    GridScreenNotifier.startDragAnimation(
+                        blocks.first,
+                        Offset(200, 300),
+                        1000,
+                        this,
+                        blocksNotifier,
+                        connectionsNotifier,
+                        trashNotifier);
+                  },
                   child: const Icon(Icons.add),
                 ),
               ),
@@ -237,42 +234,6 @@ class FlowPage extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  void _onPanEndHandler(
-    FlowBlocksNotifier blocksNotifier,
-    Offset position,
-    FlowConnectionsNotifier connectionsNotifier,
-    String id,
-  ) {
-    void resetPanAndLongPress(String blockId) {
-      blocksNotifier.setPanUpdating(false, blockId);
-      blocksNotifier.setLongPressDown(false, blockId);
-    }
-
-    if (blocksNotifier.isPanUpdatingTapPositionCollidingWithItself()) {
-      resetPanAndLongPress(id);
-      return;
-    }
-
-    if (blocksNotifier.isPanUpdatingTapPositionColliding()) {
-      String collidingBlockId =
-          blocksNotifier.getPanUpdatingCollidingBlock().entity.id;
-      connectionsNotifier.addConnection(
-        FlowConnection.buildDefault(id, collidingBlockId),
-      );
-      resetPanAndLongPress(id);
-      return;
-    }
-
-    FlowBlock newBlock = FlowBlock.buildDefault("NewBlock", position);
-    blocksNotifier.addNewBlock(newBlock);
-
-    connectionsNotifier.addConnection(
-      FlowConnection.buildDefault(id, newBlock.id),
-    );
-
-    resetPanAndLongPress(id);
   }
 
   // Build the dashed lines for all connections

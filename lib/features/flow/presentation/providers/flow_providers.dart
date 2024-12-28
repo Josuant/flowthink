@@ -1,7 +1,9 @@
 // flow_providers.dart
+import 'package:flow/features/flow/domain/entities/action_state.dart';
 import 'package:flow/features/flow/domain/entities/flow_block_state.dart';
 import 'package:flow/features/flow/domain/entities/flow_connection.dart';
 import 'package:flow/features/flow/domain/entities/trash_state.dart';
+import 'package:flow/features/flow/presentation/notifiers/action_notifier.dart';
 import 'package:flow/features/flow/presentation/notifiers/trash_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../notifiers/flow_blocks_notifier.dart';
@@ -23,3 +25,7 @@ final flowConnectionsProvider =
 final trashProvider = StateNotifierProvider<TrashNotifier, TrashState>(
   (ref) => TrashNotifier(),
 );
+
+// A provider for the ActionState
+final actionProvider = StateNotifierProvider<ActionNotifier, ActionState>(
+    (ref) => ActionNotifier());

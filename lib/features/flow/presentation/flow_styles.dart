@@ -1,3 +1,4 @@
+import 'package:figma_squircle/figma_squircle.dart';
 import 'package:flow/features/flow/utils/constants/flow_default_constants.dart';
 import 'package:flutter/material.dart';
 
@@ -25,9 +26,22 @@ class FlowStyles {
     });
   }
 
-  static BoxDecoration buldBoxDecoration(
+  static Decoration buldBoxDecoration(
       bool isUnion, bool isLongPressDown, bool isEditing, double cornerRadius) {
-    return BoxDecoration(
+    return ShapeDecoration(
+      shape: SmoothRectangleBorder(
+          borderRadius: SmoothBorderRadius(
+            cornerRadius: isLongPressDown
+                ? FlowDefaultConstants.flowBlockSelectedCornerRadius
+                : cornerRadius,
+            cornerSmoothing: 1.0,
+          ),
+          side: BorderSide(
+            color: isLongPressDown || isEditing
+                ? Colors.purple
+                : Colors.transparent,
+            width: isLongPressDown || isEditing ? 2.0 : 0.0,
+          )),
       gradient: isUnion
           ? const LinearGradient(
               begin: Alignment(-0.77, -0.64),
@@ -38,15 +52,7 @@ class FlowStyles {
               begin: Alignment(0.71, -0.71),
               end: Alignment(-0.71, 0.71),
               colors: [Color(0xFFF2F2F2), Colors.white]),
-      border: Border.all(
-        color:
-            isLongPressDown || isEditing ? Colors.purple : Colors.transparent,
-        width: isLongPressDown || isEditing ? 2.0 : 0.0,
-      ),
-      borderRadius: BorderRadius.circular(isLongPressDown
-          ? FlowDefaultConstants.flowBlockSelectedCornerRadius
-          : cornerRadius),
-      boxShadow: isUnion
+      shadows: isUnion
           ? []
           : isLongPressDown
               ? FlowStyles.buildSelectedBoxShadows()
