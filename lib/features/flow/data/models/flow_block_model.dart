@@ -1,5 +1,5 @@
 import 'package:flow/features/flow/domain/entities/flow_block.dart';
-import 'package:flow/features/flow/utils/enums/flow_block_type.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 

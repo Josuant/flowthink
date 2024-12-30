@@ -1,11 +1,12 @@
 import 'package:flow/features/flow/presentation/widgets/widget_grid.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
+import 'package:flow/features/flow/utils/flow_animator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flow/core/widgets/animated_dashed_line.dart';
 import 'package:flow/core/widgets/xml_input.dart';
 
-import 'package:flow/features/flow/domain/entities/flow_block.dart';
 import 'package:flow/features/flow/domain/entities/flow_block_state.dart';
 import 'package:flow/features/flow/domain/entities/flow_connection.dart';
 import 'package:flow/features/flow/domain/entities/trash_state.dart';
@@ -14,7 +15,6 @@ import 'package:flow/features/flow/presentation/widgets/widget_flow_block.dart';
 import 'package:flow/features/flow/presentation/widgets/widget_flow_static_block.dart';
 import 'package:flow/features/flow/presentation/widgets/widget_trash.dart';
 import 'package:flow/features/flow/presentation/widgets/widget_union_indicator.dart';
-import 'package:flow/features/flow/presentation/notifiers/trash_notifier.dart';
 import 'package:flow/features/flow/presentation/notifiers/grid_screen_notifier.dart';
 
 import 'package:flow/features/flow/presentation/providers/flow_providers.dart';
@@ -29,25 +29,41 @@ class FlowPage extends ConsumerStatefulWidget {
 
 class _FlowPageState extends ConsumerState<FlowPage>
     with TickerProviderStateMixin {
+  late Size screenSize;
+  late Offset trashInitialPosition;
+  late GridScreenNotifierAnimator screenNotifier;
+
   @override
-  Widget build(BuildContext context) {
-    final gridState = ref.watch(gridScreenProvider);
+  void initState() {
+    super.initState();
+    screenNotifier = ref.read(gridScreenProvider.notifier);
+    screenNotifier.setBlocksNotifier(ref.read(flowBlocksProvider.notifier));
+    screenNotifier
+        .setConnectionsNotifier(ref.read(flowConnectionsProvider.notifier));
+    screenNotifier.setTrashNotifier(ref.read(trashProvider.notifier));
+    screenNotifier.setTickerProvider(this);
+  }
 
-    final blocks = ref.watch(flowBlocksProvider);
-    final blocksNotifier = ref.read(flowBlocksProvider.notifier);
-
-    final connections = ref.watch(flowConnectionsProvider);
-    final connectionsNotifier = ref.read(flowConnectionsProvider.notifier);
-
-    final TrashState trashState = ref.watch(trashProvider);
-    final TrashNotifier trashNotifier = ref.read(trashProvider.notifier);
-
-    final screenSize = MediaQuery.of(context).size;
-
-    final trashInitialPosition = Offset(
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    screenSize = MediaQuery.of(context).size;
+    trashInitialPosition = Offset(
       screenSize.width / 2 - 50 / 2,
       screenSize.height - 250,
     );
+    centerScreen(ref.read(gridScreenProvider));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenState = ref.watch(gridScreenProvider);
+
+    final blocks = ref.watch(flowBlocksProvider);
+
+    final connections = ref.watch(flowConnectionsProvider);
+
+    final TrashState trashState = ref.watch(trashProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5FF),
@@ -60,7 +76,7 @@ class _FlowPageState extends ConsumerState<FlowPage>
                 minScale: 0.5,
                 maxScale: 3.0,
                 constrained: false,
-                transformationController: gridState.transformationController,
+                transformationController: screenState.transformationController,
                 child: Container(
                   width: 2000,
                   height: 2000,
@@ -72,29 +88,26 @@ class _FlowPageState extends ConsumerState<FlowPage>
                     const GridWidget(size: Size(2000, 2000)),
                     GestureDetector(
                       behavior: HitTestBehavior.translucent,
-                      onTapDown: (position) =>
-                          blocksNotifier.setAllEditingFalse(),
-                      onDoubleTapDown: (details) {
-                        blocksNotifier.setAllEditingFalse();
-                        blocksNotifier.addNewBlock(
-                          FlowBlock.buildDefault(
-                              "NewBlock", details.localPosition),
-                        );
-                      },
+                      onTapDown: (position) => screenNotifier.tapOnScreen(),
+                      onDoubleTapDown: (details) =>
+                          screenNotifier.doubleTapOnScreen(details),
                       child: Stack(
                           children: _buildConnections(connections, blocks)),
                     ),
                     // 1.5) New Block line UI
-                    if (blocksNotifier.isAnyPanUpdating() &&
-                        !blocksNotifier
+                    if (screenState.blocksNotifier.isAnyPanUpdating() &&
+                        !screenState.blocksNotifier
                             .isPanUpdatingTapPositionCollidingWithItself())
                       _buildLine(
-                        blocksNotifier.getPanUpdatingBlock().position,
-                        blocksNotifier.isPanUpdatingTapPositionColliding()
-                            ? blocksNotifier
+                        screenState.blocksNotifier
+                            .getPanUpdatingBlock()
+                            .position,
+                        screenState.blocksNotifier
+                                .isPanUpdatingTapPositionColliding()
+                            ? screenState.blocksNotifier
                                 .getPanUpdatingCollidingBlock()
                                 .position
-                            : blocksNotifier.getPanningPosition(),
+                            : screenState.blocksNotifier.getPanningPosition(),
                         true,
                       ),
 
@@ -105,99 +118,58 @@ class _FlowPageState extends ConsumerState<FlowPage>
                         return FlowBlockWidget(
                           key: ValueKey(id),
                           state: block,
-                          onDrag: (position) {
-                            blocksNotifier.onDrag(
-                                gridState.transformationController
-                                    .toScene(position),
-                                id);
-                            trashNotifier.updateCurrentPosition(position);
-                          },
-                          onFinishDrag: (position) {
-                            GridScreenNotifier.onDragEnd(
-                                id,
-                                position,
-                                gridState.transformationController
-                                    .toScene(position),
-                                trashNotifier,
-                                blocksNotifier,
-                                connectionsNotifier);
-                          },
-                          onEditing: (text) {
-                            blocksNotifier.onEditing(id);
-                          },
-                          onFinishEditing: (text) {},
-                          onStartDrag: (position) {
-                            blocksNotifier.setAllEditingFalse();
-                            blocksNotifier.onDrag(
-                                gridState.transformationController
-                                    .toScene(position),
-                                id);
-                            blocksNotifier.setDragging(true, id);
-                            blocksNotifier.setPanUpdating(false, id);
-
-                            trashNotifier
-                                .setInitialPosition(trashInitialPosition);
-                            trashNotifier.setVisibility(true);
-                            trashNotifier.updateCurrentPosition(position);
-                          },
-                          onStartEditing: () {
-                            blocksNotifier.setAllEditingFalse();
-                            blocksNotifier.setAllLongPressDownFalse();
-                            blocksNotifier.setEditing(true, id);
-                            blocksNotifier.setPanUpdating(false, id);
-                          },
-                          onLongPressDown: (position) {
-                            blocksNotifier.setLongPressDown(true, id);
-                          },
-                          onPanUpdate: (position) {
-                            blocksNotifier.setPanUpdating(true, id);
-                            blocksNotifier.setTapPosition(
-                                gridState.transformationController
-                                    .toScene(position),
-                                id);
-                          },
-                          onPanEnd: (position) {
-                            GridScreenNotifier.onPanEnd(
-                              id,
-                              gridState.transformationController
-                                  .toScene(position),
-                              blocksNotifier,
-                              connectionsNotifier,
-                            );
-                          },
+                          onDrag: (position) =>
+                              screenNotifier.onDrag(position, id),
+                          onDragEnd: (position) =>
+                              screenNotifier.onDragEnd(id, position),
+                          onEditing: (text) => screenNotifier.onEditing(id),
+                          onEditingEnd: (text) {},
+                          onDragStart: (position) => screenNotifier.onDragStart(
+                              position, id, trashInitialPosition),
+                          onEditingStart: () =>
+                              screenNotifier.onEditingStart(id),
+                          onLongPressDown: (position) =>
+                              screenNotifier.onLongPressDown(id),
+                          onPanUpdate: (position) =>
+                              screenNotifier.onPanUpdate(id, position),
+                          onPanEnd: (position) =>
+                              screenNotifier.onPanEnd(id, position),
                         );
                       }).toList(),
                     ),
 
                     // 1.3) Union indicator
-                    if (blocksNotifier.isAnyBlockColliding() &&
-                        blocksNotifier.isAnyDragging())
+                    if (screenState.blocksNotifier.isAnyBlockColliding() &&
+                        screenState.blocksNotifier.isAnyDragging())
                       UnionIndicator(
                         context: context,
-                        anotherBlock:
-                            blocksNotifier.getDraggingCollidingBlock(),
-                        dragPosition: blocksNotifier.getDraggingPosition(),
+                        anotherBlock: screenState.blocksNotifier
+                            .getDraggingCollidingBlock(),
+                        dragPosition:
+                            screenState.blocksNotifier.getDraggingPosition(),
                       ),
 
                     // 1.5) New Block UI
-                    if (blocksNotifier.isAnyPanUpdating())
+                    if (screenState.blocksNotifier.isAnyPanUpdating())
                       WidgetFlowAnimatedBlock(
                         isUnion: false,
-                        isLongPressDown:
-                            !blocksNotifier.isPanUpdatingTapPositionColliding(),
+                        isLongPressDown: !screenState.blocksNotifier
+                            .isPanUpdatingTapPositionColliding(),
                         isEditing: false,
-                        opacity: blocksNotifier
+                        opacity: screenState.blocksNotifier
                                     .isPanUpdatingTapPositionCollidingWithItself() ||
-                                blocksNotifier
+                                screenState.blocksNotifier
                                     .isPanUpdatingTapPositionColliding()
                             ? 0.3
                             : 1.0,
                         position:
-                            blocksNotifier.isPanUpdatingTapPositionColliding()
-                                ? blocksNotifier
+                            screenState.blocksNotifier
+                                    .isPanUpdatingTapPositionColliding()
+                                ? screenState.blocksNotifier
                                     .getPanUpdatingCollidingBlock()
                                     .position
-                                : blocksNotifier.getPanningPosition(),
+                                : screenState.blocksNotifier
+                                    .getPanningPosition(),
                       )
                   ]),
                 ),
@@ -212,16 +184,8 @@ class _FlowPageState extends ConsumerState<FlowPage>
                 bottom: 20,
                 right: 20,
                 child: FloatingActionButton(
-                  onPressed: () {
-                    GridScreenNotifier.startDragAnimation(
-                        blocks.first,
-                        Offset(200, 300),
-                        1000,
-                        this,
-                        blocksNotifier,
-                        connectionsNotifier,
-                        trashNotifier);
-                  },
+                  onPressed: () => FlowAnimator.executeList(
+                      FlowAnimator.animationData, screenNotifier),
                   child: const Icon(Icons.add),
                 ),
               ),
@@ -234,6 +198,13 @@ class _FlowPageState extends ConsumerState<FlowPage>
         ],
       ),
     );
+  }
+
+  void centerScreen(GridScreenState screenState) {
+    screenState.transformationController.value = Matrix4.identity()
+      ..translate(
+          (-2000 + screenSize.width) / 2, (-2000 + screenSize.height) / 2)
+      ..scale(1.0);
   }
 
   // Build the dashed lines for all connections

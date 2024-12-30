@@ -3,7 +3,7 @@ import 'package:flow/features/flow/data/datasources/flow_connection_local_dataso
 import 'package:flow/features/flow/data/models/flow_connection_model.dart';
 import 'package:flow/features/flow/domain/entities/flow_connection.dart';
 import 'package:flow/features/flow/domain/repositories/flow_connection_repository.dart';
-import 'package:flow/features/flow/utils/enums/flow_connection_direction.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 import 'package:fpdart/fpdart.dart';
 
 class FlowConnectionRepositoryImpl implements FlowConnectionRepository {

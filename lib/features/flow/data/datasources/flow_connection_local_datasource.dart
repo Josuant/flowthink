@@ -1,5 +1,5 @@
 import 'package:flow/features/flow/data/models/flow_connection_model.dart';
-import 'package:flow/features/flow/utils/enums/flow_connection_direction.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 import 'package:hive/hive.dart';
 
 class FlowConnectionLocalDatasource {

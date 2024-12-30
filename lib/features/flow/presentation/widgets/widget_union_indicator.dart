@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 class UnionIndicator extends StatelessWidget {
   final BuildContext context;
-  final FlowBlockState anotherBlock;
+  final FlowBlockState? anotherBlock;
   final Offset dragPosition;
 
   const UnionIndicator({
@@ -17,11 +17,11 @@ class UnionIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final anotherBlockPos = anotherBlock.position;
+    final anotherBlockPos = anotherBlock!.position;
     const iconSize = 20.0;
     const cornerRadius = FlowDefaultConstants.flowBlockCornerRadius;
-    final width = anotherBlock.entity.width;
-    final height = anotherBlock.entity.height;
+    final width = anotherBlock!.entity.width;
+    final height = anotherBlock!.entity.height;
 
     return Positioned(
       left: anotherBlockPos.dx - width / 2 + 5,

@@ -1,7 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:xml/xml.dart';
 
-import 'enums/flow_block_type.dart';
+import 'enums/flow_block_enums.dart';
 
 class FlowUtil {
   static Offset getCirclePosition(
@@ -122,5 +124,38 @@ class FlowUtil {
 
   static FlowBlockType? stringToEnum(String input) {
     return FlowBlockType.values.firstWhere((e) => e.toString() == input);
+  }
+
+  static Direction getRandomDirection({Direction? exclude}) {
+    List<Direction> directions = Direction.values.toList();
+    if (exclude != null) {
+      directions.remove(exclude);
+    }
+    return directions[Random().nextInt(directions.length)];
+  }
+
+  static Direction getReverseDirection(Direction direction) {
+    switch (direction) {
+      case Direction.up:
+        return Direction.down;
+      case Direction.down:
+        return Direction.up;
+      case Direction.left:
+        return Direction.right;
+      case Direction.right:
+        return Direction.left;
+    }
+  }
+
+  static Direction getDirectionFromPositions(
+      Offset positionA, Offset positionB) {
+    double dx = positionA.dx - positionB.dx;
+    double dy = positionA.dy - positionB.dy;
+
+    if (dx.abs() > dy.abs()) {
+      return dx > 0 ? Direction.left : Direction.right;
+    } else {
+      return dy > 0 ? Direction.up : Direction.down;
+    }
   }
 }

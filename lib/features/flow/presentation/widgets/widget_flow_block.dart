@@ -7,12 +7,12 @@ import 'package:google_fonts/google_fonts.dart';
 class FlowBlockWidget extends StatelessWidget {
   final FlowBlockState state;
   final Function(Offset)? onLongPressDown;
-  final Function(Offset)? onStartDrag;
+  final Function(Offset)? onDragStart;
   final Function(Offset)? onDrag;
-  final Function(Offset)? onFinishDrag;
-  final Function()? onStartEditing;
+  final Function(Offset)? onDragEnd;
+  final Function()? onEditingStart;
   final Function(String)? onEditing;
-  final Function(String)? onFinishEditing;
+  final Function(String)? onEditingEnd;
   final Function(Offset)? onPanUpdate;
   final Function(Offset)? onPanEnd;
 
@@ -20,12 +20,12 @@ class FlowBlockWidget extends StatelessWidget {
     super.key,
     required this.state,
     this.onLongPressDown,
-    this.onStartDrag,
+    this.onDragStart,
     this.onDrag,
-    this.onFinishDrag,
-    this.onStartEditing,
+    this.onDragEnd,
+    this.onEditingStart,
     this.onEditing,
-    this.onFinishEditing,
+    this.onEditingEnd,
     this.onPanUpdate,
     this.onPanEnd,
   });
@@ -91,7 +91,7 @@ class FlowBlockWidget extends StatelessWidget {
     return TextField(
       controller: state.textController,
       onChanged: (text) => onEditing!(text),
-      onSubmitted: (text) => onFinishEditing!(text),
+      onSubmitted: (text) => onEditingEnd!(text),
       autofocus: true,
       textAlign: TextAlign.center,
       maxLines: null,
@@ -111,12 +111,12 @@ class FlowBlockWidget extends StatelessWidget {
   Widget _buildGestureDetectors() {
     return GestureDetector(
       onLongPressDown: (details) => onLongPressDown!(details.globalPosition),
-      onLongPressStart: (details) => onStartDrag!(details.globalPosition),
+      onLongPressStart: (details) => onDragStart!(details.globalPosition),
       onLongPressMoveUpdate: (details) => onDrag!(details.globalPosition),
-      onLongPressEnd: (details) => onFinishDrag!(details.globalPosition),
+      onLongPressEnd: (details) => onDragEnd!(details.globalPosition),
       onPanUpdate: (details) => onPanUpdate!(details.globalPosition),
       onPanEnd: (details) => onPanEnd!(details.globalPosition),
-      onDoubleTap: () => onStartEditing!(),
+      onDoubleTap: () => onEditingStart!(),
       child: Container(
         width: (state.entity.width) + 10.0,
         height: state.entity.height + 10.0,

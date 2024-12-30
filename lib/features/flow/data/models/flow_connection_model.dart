@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flow/features/flow/domain/entities/flow_connection.dart';
-import 'package:flow/features/flow/utils/enums/flow_connection_direction.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 import 'package:hive/hive.dart';
 
 part 'flow_connection_model.g.dart';

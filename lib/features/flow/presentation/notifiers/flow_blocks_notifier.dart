@@ -1,6 +1,7 @@
 import 'package:flow/features/flow/domain/entities/flow_block.dart';
 import 'package:flow/features/flow/domain/entities/flow_block_state.dart';
 import 'package:flow/features/flow/utils/constants/flow_default_constants.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -289,13 +290,39 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
   }
 
   //Get the default Rect area of a tap position
-  Rect getTapPositionRect(Offset tapPosition) {
+  Rect getPositionRect(Offset tapPosition) {
     return Rect.fromLTWH(
       tapPosition.dx - FlowDefaultConstants.flowBlockWidth / 2,
       tapPosition.dy - FlowDefaultConstants.flowBlockHeight / 2,
       FlowDefaultConstants.flowBlockWidth,
       FlowDefaultConstants.flowBlockHeight,
     );
+  }
+
+  double getSpaceBetweenRects(Rect rectA, Rect rectB, Direction direction) {
+    switch (direction) {
+      case Direction.up:
+        return rectA.top - rectB.bottom;
+      case Direction.down:
+        return rectB.top - rectA.bottom;
+      case Direction.left:
+        return rectA.left - rectB.right;
+      case Direction.right:
+        return rectB.left - rectA.right;
+    }
+  }
+
+  getSpaceBetweenBlocks(String idA, String idB, Direction direction) {
+    final rectA = getBlockRect(idA);
+    final rectB = getBlockRect(idB);
+    return getSpaceBetweenRects(rectA, rectB, direction);
+  }
+
+  getSpaceBetweenBlockAndPosition(
+      Offset position, String id, Direction direction) {
+    final rect = getBlockRect(id);
+    final positionRect = getPositionRect(position);
+    return getSpaceBetweenRects(rect, positionRect, direction);
   }
 
   //Check if the Dragging block is colliding with any other block
@@ -312,7 +339,7 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
       if (block.entity.id != panUpdatingBlock.entity.id) {
         final blockRect = getBlockRect(block.entity.id);
         return blockRect
-            .overlaps(getTapPositionRect(panUpdatingBlock.tapPosition!));
+            .overlaps(getPositionRect(panUpdatingBlock.tapPosition!));
       }
       return false;
     });
@@ -324,7 +351,7 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
         state.firstWhere((block) => block.isPanUpdating ?? false);
     final panUpdatingBlockRect = getBlockRect(panUpdatingBlock.entity.id);
     return panUpdatingBlockRect
-        .overlaps(getTapPositionRect(panUpdatingBlock.tapPosition!));
+        .overlaps(getPositionRect(panUpdatingBlock.tapPosition!));
   }
 
   // Check if a certain block is colliding with another block
@@ -336,6 +363,13 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
         return blockARect.overlaps(blockRect);
       }
       return false;
+    });
+  }
+
+  bool isPositionColliding(Offset position) {
+    return state.any((block) {
+      final blockRect = getBlockRect(block.entity.id);
+      return blockRect.contains(position);
     });
   }
 
@@ -362,7 +396,7 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
       if (block.entity.id != panUpdatingBlock.entity.id) {
         final blockRect = getBlockRect(block.entity.id);
         return blockRect
-            .overlaps(getTapPositionRect(panUpdatingBlock.tapPosition!));
+            .overlaps(getPositionRect(panUpdatingBlock.tapPosition!));
       }
       return false;
     });
@@ -379,5 +413,37 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
       }
       return false;
     });
+  }
+
+  FlowBlockState getBlock(String id) {
+    return state.firstWhere((block) => block.entity.id == id);
+  }
+
+  FlowBlockState? getBlockByPosition(Offset position) {
+    final positionRect = getPositionRect(position);
+
+    // Find the block if it exists
+    for (final block in state) {
+      final blockRect = getBlockRect(block.entity.id);
+      if (blockRect.overlaps(positionRect)) {
+        return block;
+      }
+    }
+
+    // Return null if no block matches
+    return null;
+  }
+
+  bool isAnimating(String id) {
+    return state.firstWhere((block) => block.entity.id == id).isAnimating;
+  }
+
+  void setAnimating(bool bool, String id) {
+    state = state.map((block) {
+      if (block.entity.id == id) {
+        return block.copyWith(isAnimating: bool, entity: block.entity);
+      }
+      return block;
+    }).toList();
   }
 }

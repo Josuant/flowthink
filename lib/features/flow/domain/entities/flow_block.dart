@@ -1,6 +1,6 @@
 import 'package:flow/core/utils/constants/ui_constants.dart';
 import 'package:flow/features/flow/utils/constants/flow_default_constants.dart';
-import 'package:flow/features/flow/utils/enums/flow_block_type.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 import 'package:flutter/material.dart';
 
 /// Represents a block in a flow diagram.
@@ -46,9 +46,9 @@ class FlowBlock {
     required this.tags,
   });
 
-  static FlowBlock buildDefault(String text, Offset position) {
+  static FlowBlock buildDefault(String text, Offset position, {String? id}) {
     return FlowBlock(
-      id: UniqueKey().toString(),
+      id: id ?? UniqueKey().toString(),
       type: FlowBlockType.process,
       text: text,
       width: FlowDefaultConstants.flowBlockWidth,

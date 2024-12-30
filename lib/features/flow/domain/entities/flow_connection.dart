@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flow/core/utils/constants/ui_constants.dart';
 import 'package:flow/features/flow/utils/constants/flow_default_constants.dart';
-import 'package:flow/features/flow/utils/enums/flow_connection_direction.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 
 /// Represents a connection between two flows in a flow diagram.
 ///

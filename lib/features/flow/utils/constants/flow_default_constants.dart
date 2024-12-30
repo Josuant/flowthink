@@ -12,7 +12,7 @@ abstract class FlowDefaultConstants {
   static const double flowBlockWidth = 150.0;
 
   /// The default margin around a flow block in logical pixels.
-  static const double flowBlockMargin = 10.0;
+  static const double flowBlockMargin = 50.0;
 
   /// The default padding inside a flow block in logical pixels.
   static const double flowBlockPadding = 10.0;

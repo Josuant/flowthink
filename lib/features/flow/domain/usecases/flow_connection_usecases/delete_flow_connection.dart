@@ -1,5 +1,5 @@
 import 'package:flow/features/flow/domain/repositories/flow_connection_repository.dart';
-import 'package:flow/features/flow/utils/enums/flow_connection_direction.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 
 class DeleteFlowConnection {
   final FlowConnectionRepository _flowConnectionRepository;

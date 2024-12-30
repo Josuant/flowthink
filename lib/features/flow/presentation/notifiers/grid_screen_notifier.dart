@@ -4,206 +4,140 @@ import 'package:flow/features/flow/domain/entities/flow_connection.dart';
 import 'package:flow/features/flow/presentation/notifiers/flow_blocks_notifier.dart';
 import 'package:flow/features/flow/presentation/notifiers/flow_connections_notifier.dart';
 import 'package:flow/features/flow/presentation/notifiers/trash_notifier.dart';
+import 'package:flow/features/flow/utils/constants/flow_default_constants.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
+import 'package:flow/features/flow/utils/flow_util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-part 'package:flow/features/flow/domain/entities/grid_screen_state.dart'; // We'll define state in the same folder
+part 'package:flow/features/flow/domain/entities/grid_screen_state.dart';
+part 'package:flow/features/flow/presentation/notifiers/grid_screen_animator_notifier.dart';
 
 final gridScreenProvider =
-    StateNotifierProvider<GridScreenNotifier, GridScreenState>(
-  (ref) => GridScreenNotifier(),
+    StateNotifierProvider<GridScreenNotifierAnimator, GridScreenState>(
+  (ref) => GridScreenNotifierAnimator(),
 );
 
 class GridScreenNotifier extends StateNotifier<GridScreenState> {
   GridScreenNotifier() : super(GridScreenState.initial());
 
-  void startAnimation(int durationMS) {
-    state.isOnAnimation = true;
-    Future.delayed(Duration(milliseconds: durationMS), () {
-      state.isOnAnimation = false;
-    });
+  void setBlocksNotifier(FlowBlocksNotifier blocksNotifier) {
+    state.blocksNotifier = blocksNotifier;
   }
 
-  // Start a drag operation simulation
-  static void startDragAnimation(
-      FlowBlockState block,
-      Offset finalPosition,
-      int durationMS,
-      TickerProvider tickerProvider,
-      FlowBlocksNotifier blocksNotifier,
-      FlowConnectionsNotifier connectionsNotifier,
-      TrashNotifier trashNotifier) {
-    final dragAnimationController = BlockAnimationController(
-      block: block,
-      finalPosition: finalPosition,
-      durationMS: durationMS,
-      tickerProvider: tickerProvider,
-      blocksNotifier: blocksNotifier,
-      connectionsNotifier: connectionsNotifier,
-      trashNotifier: trashNotifier,
-      initialPosition: block.position,
-    );
-
-    dragAnimationController.startAnimation(
-      onUpdate: (position) {
-        blocksNotifier.setPosition(position, block.entity.id);
-      },
-      onComplete: () {
-        onDragEnd(block.entity.id, finalPosition, finalPosition, trashNotifier,
-            blocksNotifier, connectionsNotifier);
-      },
-      onBegin: () {
-        blocksNotifier.setDragging(true, block.entity.id);
-      },
-    );
+  void setConnectionsNotifier(FlowConnectionsNotifier connectionsNotifier) {
+    state.connectionsNotifier = connectionsNotifier;
   }
 
-  static void onDragEnd(
-      String id,
-      Offset position,
-      Offset transformedPosition,
-      TrashNotifier trashNotifier,
-      FlowBlocksNotifier blocksNotifier,
-      FlowConnectionsNotifier connectionsNotifier) {
-    if (trashNotifier.veryfyProximity(position)) {
-      blocksNotifier.removeBlock(id);
-      connectionsNotifier.removeConnectionsByBlockId(id);
-    } else if (blocksNotifier.isDraggingColliding()) {
-      final collidingBlock = blocksNotifier.getDraggingCollidingBlock();
-      blocksNotifier.combineBlocks(id, collidingBlock.entity.id);
-      connectionsNotifier.mergeConnections(id, collidingBlock.entity.id);
+  void setTrashNotifier(TrashNotifier trashNotifier) {
+    state.trashNotifier = trashNotifier;
+  }
 
-      blocksNotifier.setLongPressDown(false, id);
-      blocksNotifier.setDragging(false, id);
+  void setTickerProvider(TickerProvider tickerProvider) {
+    state.tickerProvider = tickerProvider;
+  }
+
+  void onDragEnd(String id, Offset position) {
+    if (state.trashNotifier.veryfyProximity(position)) {
+      state.blocksNotifier.removeBlock(id);
+      state.connectionsNotifier.removeConnectionsByBlockId(id);
+    } else if (state.blocksNotifier.isDraggingColliding()) {
+      final collidingBlock = state.blocksNotifier.getDraggingCollidingBlock();
+      state.blocksNotifier.combineBlocks(id, collidingBlock.entity.id);
+      state.connectionsNotifier.mergeConnections(id, collidingBlock.entity.id);
+
+      state.blocksNotifier.setLongPressDown(false, id);
+      state.blocksNotifier.setDragging(false, id);
+      state.blocksNotifier.setAnimating(false, id);
     } else {
-      blocksNotifier.onFinishDrag(id, transformedPosition);
-      blocksNotifier.setLongPressDown(false, id);
-      blocksNotifier.setDragging(false, id);
+      state.blocksNotifier.setLongPressDown(false, id);
+      state.blocksNotifier.setDragging(false, id);
+      state.blocksNotifier.setAnimating(false, id);
     }
-    trashNotifier.setVisibility(false);
+    state.trashNotifier.setVisibility(false);
   }
 
-  // Start a panning animation simulation
-  static void startPanAnimation(
-      FlowBlockState block,
-      Offset finalPosition,
-      int durationMS,
-      TickerProvider tickerProvider,
-      FlowBlocksNotifier blocksNotifier,
-      FlowConnectionsNotifier connectionsNotifier) {
-    final panAnimationController = BlockAnimationController(
-      block: block,
-      finalPosition: finalPosition,
-      durationMS: durationMS,
-      tickerProvider: tickerProvider,
-      blocksNotifier: blocksNotifier,
-      connectionsNotifier: connectionsNotifier,
-      initialPosition: block.position,
-    );
+  void onPanEnd(String id, Offset finalPosition, {Offset? tp}) {
+    Offset transformedPosition =
+        tp ?? state.transformationController.toScene(finalPosition);
 
-    panAnimationController.startAnimation(
-      onUpdate: (position) {
-        blocksNotifier.setTapPosition(position, block.entity.id);
-      },
-      onComplete: () {
-        onPanEnd(block.entity.id, finalPosition, blocksNotifier,
-            connectionsNotifier);
-      },
-      onBegin: () {
-        blocksNotifier.setPanUpdating(true, block.entity.id);
-      },
-    );
-  }
-
-  static void onPanEnd(
-      String id,
-      Offset finalPosition,
-      FlowBlocksNotifier blocksNotifier,
-      FlowConnectionsNotifier connectionsNotifier) {
     void resetPanAndLongPress(String blockId) {
-      blocksNotifier.setPanUpdating(false, blockId);
-      blocksNotifier.setLongPressDown(false, blockId);
+      print("resetPanAndLongPress $blockId");
+      state.blocksNotifier.setPanUpdating(false, blockId);
+      state.blocksNotifier.setLongPressDown(false, blockId);
+      state.blocksNotifier.setAnimating(false, id);
     }
 
-    if (blocksNotifier.isPanUpdatingTapPositionCollidingWithItself()) {
+    if (state.blocksNotifier.isPanUpdatingTapPositionCollidingWithItself()) {
       resetPanAndLongPress(id);
       return;
     }
 
-    if (blocksNotifier.isPanUpdatingTapPositionColliding()) {
+    if (state.blocksNotifier.isPanUpdatingTapPositionColliding()) {
       String collidingBlockId =
-          blocksNotifier.getPanUpdatingCollidingBlock().entity.id;
-      connectionsNotifier.addConnection(
+          state.blocksNotifier.getPanUpdatingCollidingBlock().entity.id;
+      state.connectionsNotifier.addConnection(
         FlowConnection.buildDefault(id, collidingBlockId),
       );
       resetPanAndLongPress(id);
       return;
     }
 
-    FlowBlock newBlock = FlowBlock.buildDefault("NewBlock", finalPosition);
-    blocksNotifier.addNewBlock(newBlock);
+    FlowBlock newBlock =
+        FlowBlock.buildDefault("NewBlock", transformedPosition);
+    state.blocksNotifier.addNewBlock(newBlock);
 
-    connectionsNotifier.addConnection(
+    state.connectionsNotifier.addConnection(
       FlowConnection.buildDefault(id, newBlock.id),
     );
 
     resetPanAndLongPress(id);
   }
-}
 
-class BlockAnimationController {
-  final FlowBlockState block;
-  final Offset initialPosition;
-  final Offset finalPosition;
-  final int durationMS;
-  final TickerProvider tickerProvider;
-  final FlowBlocksNotifier blocksNotifier;
-  final FlowConnectionsNotifier connectionsNotifier;
-
-  BlockAnimationController({
-    required this.block,
-    required this.initialPosition,
-    required this.finalPosition,
-    required this.durationMS,
-    required this.tickerProvider,
-    required this.blocksNotifier,
-    required this.connectionsNotifier,
-    TrashNotifier? trashNotifier,
-  });
-
-  void startAnimation({
-    required void Function(Offset position) onUpdate,
-    required void Function() onComplete,
-    required void Function() onBegin,
-    Curve curve = Curves.fastLinearToSlowEaseIn,
-  }) {
-    final controller = AnimationController(
-      vsync: tickerProvider,
-      duration: Duration(milliseconds: durationMS),
-    );
-
-    final curvedAnimation = CurvedAnimation(
-      parent: controller,
-      curve: curve,
-    );
-
-    final animation = Tween<Offset>(
-      begin: initialPosition,
-      end: finalPosition,
-    ).animate(curvedAnimation);
-
-    controller.addListener(() {
-      onUpdate(animation.value);
-    });
-
-    controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        controller.dispose();
-        onComplete();
-      }
-    });
-
-    onBegin();
-
-    controller.forward();
+  void onPanUpdate(String id, Offset position) {
+    state.blocksNotifier.setPanUpdating(true, id);
+    state.blocksNotifier
+        .setTapPosition(state.transformationController.toScene(position), id);
   }
+
+  void onLongPressDown(String id) {
+    state.blocksNotifier.setLongPressDown(true, id);
+  }
+
+  void onEditingStart(String id) {
+    state.blocksNotifier.setAllEditingFalse();
+    state.blocksNotifier.setAllLongPressDownFalse();
+    state.blocksNotifier.setEditing(true, id);
+    state.blocksNotifier.setPanUpdating(false, id);
+  }
+
+  void onDragStart(Offset position, String id, Offset trashInitialPosition) {
+    state.blocksNotifier.setAllEditingFalse();
+    state.blocksNotifier
+        .onDrag(state.transformationController.toScene(position), id);
+    state.blocksNotifier.setDragging(true, id);
+    state.blocksNotifier.setPanUpdating(false, id);
+
+    state.trashNotifier.setInitialPosition(trashInitialPosition);
+    state.trashNotifier.setVisibility(true);
+    state.trashNotifier.updateCurrentPosition(position);
+  }
+
+  void onEditing(String id) {
+    state.blocksNotifier.onEditing(id);
+  }
+
+  void onDrag(Offset position, String id) {
+    state.blocksNotifier
+        .onDrag(state.transformationController.toScene(position), id);
+    state.trashNotifier.updateCurrentPosition(position);
+  }
+
+  void doubleTapOnScreen(TapDownDetails details) {
+    state.blocksNotifier.setAllEditingFalse();
+    state.blocksNotifier.addNewBlock(
+      FlowBlock.buildDefault("NewBlock", details.localPosition),
+    );
+  }
+
+  void tapOnScreen() => state.blocksNotifier.setAllEditingFalse();
 }
