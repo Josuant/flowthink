@@ -5,7 +5,7 @@ class GridScreenNotifierAnimator extends GridScreenNotifier {
 
   void drag(
       String id, Offset initialPosition, Offset finalPosition, int durationMS,
-      {Function()? onComplete}) {
+      {Function? onComplete}) {
     final dragAnimationController = BlockAnimationController(
       finalPosition: finalPosition,
       durationMS: durationMS,
@@ -20,7 +20,7 @@ class GridScreenNotifierAnimator extends GridScreenNotifier {
       onComplete: () {
         onDragEnd(id, finalPosition);
         if (onComplete != null) {
-          onComplete();
+          onComplete.call();
         }
       },
       onBegin: () {
@@ -32,7 +32,10 @@ class GridScreenNotifierAnimator extends GridScreenNotifier {
 
   void pan(
       String id, Offset initialPosition, Offset finalPosition, int durationMS,
-      {Function()? onComplete, Offset? transformedPosition}) {
+      {Function? onComplete,
+      Offset? transformedPosition,
+      String? idB,
+      String? text}) {
     if (state.blocksNotifier.isAnimating(id)) {
       return;
     }
@@ -48,9 +51,10 @@ class GridScreenNotifierAnimator extends GridScreenNotifier {
         state.blocksNotifier.setTapPosition(position, id);
       },
       onComplete: () {
-        onPanEnd(id, finalPosition, tp: transformedPosition);
+        onPanEnd(id, finalPosition,
+            tp: transformedPosition, idB: idB, text: text);
         if (onComplete != null) {
-          onComplete();
+          onComplete.call();
         }
       },
       onBegin: () {
@@ -62,7 +66,7 @@ class GridScreenNotifierAnimator extends GridScreenNotifier {
   }
 
   void dragAt(String id, Direction direction,
-      {Function()? onComplete, double? amount}) {
+      {Function? onComplete, double? amount}) {
     FlowBlockState block = state.blocksNotifier.getBlock(id);
     Offset initialPosition = block.position;
     double width = block.entity.width;
@@ -110,7 +114,8 @@ class GridScreenNotifierAnimator extends GridScreenNotifier {
     }
   }
 
-  void generate(Offset position, String text, {String? id}) {
+  void generate(Offset position, String text,
+      {String? id, Function? onComplete}) {
     FlowBlockState? posiblyCollidingBlock =
         state.blocksNotifier.getBlockByPosition(position);
 
@@ -123,29 +128,34 @@ class GridScreenNotifierAnimator extends GridScreenNotifier {
       dragAt(
         posiblyCollidingBlock.entity.id,
         directionAnother,
-        onComplete: () => generate(position, text, id: id),
+        onComplete: () =>
+            generate(position, text, id: id, onComplete: onComplete),
       );
       return;
     }
 
     FlowBlock newBlock = FlowBlock.buildDefault(text, position, id: id);
     state.blocksNotifier.addNewBlock(newBlock);
+
+    if (onComplete != null) {
+      onComplete.call();
+    }
   }
 
-  void connect(String idA, String idB) {
+  void connect(String idA, String idB, {Function? onComplete}) {
     Offset initialPosition = state.blocksNotifier.getBlock(idA).position;
     Offset positionB = state.blocksNotifier.getBlock(idB).position;
-    pan(idA, initialPosition, positionB, 800);
+    pan(idA, initialPosition, positionB, 800, onComplete: onComplete);
   }
 
-  void combine(String idA, String idB) {
+  void combine(String idA, String idB, {Function? onComplete}) {
     Offset initialPosition = state.blocksNotifier.getBlock(idA).position;
     Offset positionB = state.blocksNotifier.getBlock(idB).position;
-    drag(idA, initialPosition, positionB, 800);
+    drag(idA, initialPosition, positionB, 800, onComplete: onComplete);
   }
 
   void generateAt(String idA, String text, Direction direction,
-      {String? idB, bool connected = false}) {
+      {String? idB, bool connected = false, Function? onComplete}) {
     Offset initialPosition = state.blocksNotifier.getBlock(idA).position;
     double width = FlowDefaultConstants.flowBlockWidth;
     double height = FlowDefaultConstants.flowBlockHeight;
@@ -167,20 +177,22 @@ class GridScreenNotifierAnimator extends GridScreenNotifier {
           posiblyCollidingBlock.entity.id,
           directionAnother,
           onComplete: () => pan(idA, initialPosition, finalPosition, 800,
-              transformedPosition: finalPosition),
+              transformedPosition: finalPosition, onComplete: onComplete),
         );
         return;
       }
-
       pan(idA, initialPosition, finalPosition, 800,
-          transformedPosition: finalPosition);
+          transformedPosition: finalPosition,
+          idB: idB,
+          text: text,
+          onComplete: onComplete);
     } else {
-      generate(finalPosition, text, id: idB);
+      generate(finalPosition, text, id: idB, onComplete: onComplete);
     }
   }
 
-  void generateFirst(String text, {String? id}) {
-    generate(const Offset(1000, 1000), text, id: id);
+  void generateFirst(String text, {String? id, Function? onComplete}) {
+    generate(const Offset(1000, 1000), text, id: id, onComplete: onComplete);
   }
 
   @override

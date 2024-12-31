@@ -1,5 +1,4 @@
 import 'package:flow/features/flow/presentation/widgets/widget_grid.dart';
-import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 import 'package:flow/features/flow/utils/flow_animator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -176,7 +175,9 @@ class _FlowPageState extends ConsumerState<FlowPage>
               ),
               // 2) Xml input
               XmlInputWidget(
-                onXmlSubmitted: (xml) {},
+                onXmlSubmitted: (xml) {
+                  FlowAnimator.executeList(xml, screenNotifier);
+                },
                 hintText: 'Escribe algo...',
               ),
               // 3) Simulate button
@@ -184,8 +185,7 @@ class _FlowPageState extends ConsumerState<FlowPage>
                 bottom: 20,
                 right: 20,
                 child: FloatingActionButton(
-                  onPressed: () => FlowAnimator.executeList(
-                      FlowAnimator.animationData, screenNotifier),
+                  onPressed: () {},
                   child: const Icon(Icons.add),
                 ),
               ),

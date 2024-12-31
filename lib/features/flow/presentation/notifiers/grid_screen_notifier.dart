@@ -56,7 +56,8 @@ class GridScreenNotifier extends StateNotifier<GridScreenState> {
     state.trashNotifier.setVisibility(false);
   }
 
-  void onPanEnd(String id, Offset finalPosition, {Offset? tp}) {
+  void onPanEnd(String id, Offset finalPosition,
+      {Offset? tp, String? idB, String? text}) {
     Offset transformedPosition =
         tp ?? state.transformationController.toScene(finalPosition);
 
@@ -82,8 +83,9 @@ class GridScreenNotifier extends StateNotifier<GridScreenState> {
       return;
     }
 
-    FlowBlock newBlock =
-        FlowBlock.buildDefault("NewBlock", transformedPosition);
+    FlowBlock newBlock = FlowBlock.buildDefault(
+        text ?? "New Block", transformedPosition,
+        id: idB);
     state.blocksNotifier.addNewBlock(newBlock);
 
     state.connectionsNotifier.addConnection(
