@@ -1,4 +1,7 @@
+import 'package:flow/features/ai/presentation/notifiers/ai_notifier.dart';
+import 'package:flow/features/flow/presentation/widgets/widget_flow_label.dart';
 import 'package:flow/features/flow/presentation/widgets/widget_grid.dart';
+import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 import 'package:flow/features/flow/utils/flow_animator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +34,7 @@ class _FlowPageState extends ConsumerState<FlowPage>
   late Size screenSize;
   late Offset trashInitialPosition;
   late GridScreenNotifierAnimator screenNotifier;
+  late IANotifier iaNotifier;
 
   @override
   void initState() {
@@ -41,6 +45,9 @@ class _FlowPageState extends ConsumerState<FlowPage>
         .setConnectionsNotifier(ref.read(flowConnectionsProvider.notifier));
     screenNotifier.setTrashNotifier(ref.read(trashProvider.notifier));
     screenNotifier.setTickerProvider(this);
+
+    iaNotifier = ref.read(iaProvider.notifier);
+    iaNotifier.init();
   }
 
   @override
@@ -57,6 +64,7 @@ class _FlowPageState extends ConsumerState<FlowPage>
   @override
   Widget build(BuildContext context) {
     final screenState = ref.watch(gridScreenProvider);
+    final iaState = ref.watch(iaProvider);
 
     final blocks = ref.watch(flowBlocksProvider);
 
@@ -114,26 +122,16 @@ class _FlowPageState extends ConsumerState<FlowPage>
                     Stack(
                       children: blocks.map((block) {
                         final id = block.entity.id;
-                        return FlowBlockWidget(
-                          key: ValueKey(id),
-                          state: block,
-                          onDrag: (position) =>
-                              screenNotifier.onDrag(position, id),
-                          onDragEnd: (position) =>
-                              screenNotifier.onDragEnd(id, position),
-                          onEditing: (text) => screenNotifier.onEditing(id),
-                          onEditingEnd: (text) {},
-                          onDragStart: (position) => screenNotifier.onDragStart(
-                              position, id, trashInitialPosition),
-                          onEditingStart: () =>
-                              screenNotifier.onEditingStart(id),
-                          onLongPressDown: (position) =>
-                              screenNotifier.onLongPressDown(id),
-                          onPanUpdate: (position) =>
-                              screenNotifier.onPanUpdate(id, position),
-                          onPanEnd: (position) =>
-                              screenNotifier.onPanEnd(id, position),
-                        );
+                        final type = block.entity.type;
+                        if (type == FlowBlockType.process) {
+                          return _buildFlowBlock(id, block);
+                        } else if (type == FlowBlockType.label) {
+                          return FlowLabelWidget(
+                            key: ValueKey(id),
+                            state: block,
+                          );
+                        }
+                        return const SizedBox();
                       }).toList(),
                     ),
 
@@ -176,7 +174,7 @@ class _FlowPageState extends ConsumerState<FlowPage>
               // 2) Xml input
               XmlInputWidget(
                 onXmlSubmitted: (xml) {
-                  FlowAnimator.executeList(xml, screenNotifier);
+                  iaNotifier.fetchResponse(xml);
                 },
                 hintText: 'Escribe algo...',
               ),
@@ -185,7 +183,12 @@ class _FlowPageState extends ConsumerState<FlowPage>
                 bottom: 20,
                 right: 20,
                 child: FloatingActionButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    screenNotifier.generateLabel(
+                      const Offset(100, 100),
+                      'Decision',
+                    );
+                  },
                   child: const Icon(Icons.add),
                 ),
               ),
@@ -193,6 +196,15 @@ class _FlowPageState extends ConsumerState<FlowPage>
               WidgetTrash(
                 state: trashState,
               ),
+              iaState.when(
+                data: (data) {
+                  Future(() => {FlowAnimator.executeList(data, screenNotifier)})
+                      .then((value) => iaNotifier.clear());
+                  return const SizedBox();
+                },
+                error: (error, stackTrace) => const SizedBox(),
+                loading: () => const SizedBox(),
+              )
             ],
           ),
         ],
@@ -231,6 +243,23 @@ class _FlowPageState extends ConsumerState<FlowPage>
       start: start,
       end: end,
       color: Colors.purple,
+    );
+  }
+
+  Widget _buildFlowBlock(String id, FlowBlockState block) {
+    return FlowBlockWidget(
+      key: ValueKey(id),
+      state: block,
+      onDrag: (position) => screenNotifier.onDrag(position, id),
+      onDragEnd: (position) => screenNotifier.onDragEnd(id, position),
+      onEditing: (text) => screenNotifier.onEditing(id),
+      onEditingEnd: (text) {},
+      onDragStart: (position) =>
+          screenNotifier.onDragStart(position, id, trashInitialPosition),
+      onEditingStart: () => screenNotifier.onEditingStart(id),
+      onLongPressDown: (position) => screenNotifier.onLongPressDown(id),
+      onPanUpdate: (position) => screenNotifier.onPanUpdate(id, position),
+      onPanEnd: (position) => screenNotifier.onPanEnd(id, position),
     );
   }
 }

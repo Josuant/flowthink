@@ -45,14 +45,14 @@ class FlowBlockWidget extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         // AnimatedContainer
-        _buildAnimatedContainer(),
+        buildAnimatedContainer(),
         // Gesture detectors
         if (!state.isEditing) _buildGestureDetectors(),
       ],
     );
   }
 
-  Widget _buildAnimatedContainer() {
+  Widget buildAnimatedContainer() {
     return AnimatedContainer(
       duration: Duration(milliseconds: 400),
       curve: Curves.easeOut,
@@ -69,14 +69,14 @@ class FlowBlockWidget extends StatelessWidget {
       alignment: Alignment.center,
       child: IntrinsicWidth(
         child: IntrinsicHeight(
-          child: state.isEditing ? _buildTextField() : _buildText(),
+          child: state.isEditing ? buildTextField() : buildText(),
         ),
       ),
     );
   }
 
   // ----------------- Text / TextField -----------------
-  Widget _buildText() {
+  Widget buildText() {
     return Text(
       state.textController.text,
       textAlign: TextAlign.center,
@@ -87,7 +87,7 @@ class FlowBlockWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField() {
+  Widget buildTextField() {
     return TextField(
       controller: state.textController,
       onChanged: (text) => onEditing!(text),

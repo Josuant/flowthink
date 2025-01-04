@@ -36,6 +36,10 @@ class GridScreenNotifier extends StateNotifier<GridScreenState> {
     state.tickerProvider = tickerProvider;
   }
 
+  void setIsOnAnimation(bool value) {
+    state = state.copyWith(isOnAnimation: value);
+  }
+
   void onDragEnd(String id, Offset position) {
     if (state.trashNotifier.veryfyProximity(position)) {
       state.blocksNotifier.removeBlock(id);

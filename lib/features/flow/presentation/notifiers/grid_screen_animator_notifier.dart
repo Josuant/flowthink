@@ -3,6 +3,8 @@ part of 'package:flow/features/flow/presentation/notifiers/grid_screen_notifier.
 class GridScreenNotifierAnimator extends GridScreenNotifier {
   GridScreenNotifierAnimator() : super();
 
+  bool get isOnAnimation => state.isOnAnimation;
+
   void drag(
       String id, Offset initialPosition, Offset finalPosition, int durationMS,
       {Function? onComplete}) {
@@ -135,6 +137,17 @@ class GridScreenNotifierAnimator extends GridScreenNotifier {
     }
 
     FlowBlock newBlock = FlowBlock.buildDefault(text, position, id: id);
+    state.blocksNotifier.addNewBlock(newBlock);
+
+    if (onComplete != null) {
+      onComplete.call();
+    }
+  }
+
+  void generateLabel(Offset position, String text,
+      {String? id, Function? onComplete}) {
+    FlowBlock newBlock = FlowBlock.buildDefault(text, position,
+        id: id, type: FlowBlockType.label);
     state.blocksNotifier.addNewBlock(newBlock);
 
     if (onComplete != null) {

@@ -3,6 +3,7 @@ enum FlowBlockType {
   process,
   decision,
   end,
+  label,
 }
 
 enum FlowConnectionDirection {

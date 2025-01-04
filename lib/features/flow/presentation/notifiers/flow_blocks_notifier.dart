@@ -10,6 +10,10 @@ class FlowBlocksNotifier extends StateNotifier<List<FlowBlockState>> {
 
   //Add new flow block
   void addNewBlock(FlowBlock entity) {
+    //check if the entity is already in the list
+    if (state.any((block) => block.entity.id == entity.id)) {
+      return;
+    }
     state = [
       ...state,
       FlowBlockState(

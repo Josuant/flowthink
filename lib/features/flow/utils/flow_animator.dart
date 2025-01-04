@@ -9,6 +9,7 @@ library;
 
 import 'dart:convert';
 
+import 'package:flow/core/utils/flow_logger.dart';
 import 'package:flow/features/flow/presentation/notifiers/grid_screen_notifier.dart';
 import 'package:flow/features/flow/utils/enums/flow_block_enums.dart';
 
@@ -16,9 +17,26 @@ abstract class FlowAnimator {
   /// The default delay before starting animations for flow blocks, in seconds.
   static const int defaultDelayMS = 1000;
 
+  static bool validateJsonFormat(String rawData) {
+    return rawData.startsWith('```json') && rawData.endsWith('```');
+  }
+
+  static String cleanJsonString(String rawData) {
+    rawData = rawData.trim();
+    if (!validateJsonFormat(rawData)) {
+      throw const FormatException(
+          'Invalid format: JSON string must start with ```json and end with ```');
+    }
+    return rawData.replaceFirst('```json', '').replaceFirst('```', '').trim();
+  }
+
   static void executeList(
       String animationData, GridScreenNotifierAnimator animator) {
-    final animations = getAnimations(json.decode(animationData));
+    if (animator.isOnAnimation) return;
+    animator.setIsOnAnimation(true);
+    FlowLogger.info("Executing animation data: $animationData");
+    final animations =
+        getAnimations(json.decode(cleanJsonString(animationData)));
     if (animations.isNotEmpty) {
       executeListAt(animations, animator, 0);
     }
@@ -34,6 +52,8 @@ abstract class FlowAnimator {
         if (iterator + 1 < animationList.length) {
           executeListAt(animationList, animator, iterator + 1,
               delayMS: delayMS);
+        } else {
+          animator.setIsOnAnimation(false);
         }
       },
     );
@@ -150,6 +170,10 @@ abstract class FlowAnimator {
   }
 
   static Direction stringToEnum(String animationPart) {
+    // convert posibles values to enum values
+    if (animationPart == "bottom") return Direction.down;
+    if (animationPart == "top") return Direction.up;
+
     return Direction.values.firstWhere((e) => e.name == animationPart);
   }
 

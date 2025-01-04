@@ -59,4 +59,27 @@ class FlowStyles {
               : FlowStyles.buildBoxShadows(),
     );
   }
+
+  static Decoration buldLabelDecoration(bool isLongPressDown, bool isEditing) {
+    return ShapeDecoration(
+      shape: SmoothRectangleBorder(
+          borderRadius: SmoothBorderRadius(
+            cornerRadius: isLongPressDown ? 5 : 2,
+            cornerSmoothing: 1.0,
+          ),
+          side: BorderSide(
+              color: isLongPressDown || isEditing
+                  ? const Color(0xFFBCACF5)
+                  : const Color(0x66BCACF5),
+              width: 2.0)),
+      gradient: const LinearGradient(
+        begin: Alignment(-0.77, -0.64),
+        end: Alignment(0.77, 0.64),
+        colors: [Color(0x66FFFFFF), Color(0x66F2F2F2)],
+      ),
+      shadows: isLongPressDown
+          ? FlowStyles.buildSelectedBoxShadows()
+          : FlowStyles.buildBoxShadows(),
+    );
+  }
 }
