@@ -10,6 +10,3 @@
 ## Próximamente 🛠️
 - **Exportación versátil**: Guarda tus diagramas en formatos como PNG, PDF o JSON para integrarlos en otros proyectos.
 - **Edición avanzada**: Personaliza colores, estilos y mucho más para un control total sobre el diseño de tus diagramas.
-
-## Contribuciones 💡
-FlowThink está en constante evolución, y valoramos tus ideas y aportaciones. Puedes contribuir al proyecto, reportar problemas o sugerir mejoras mediante Issues o Pull Requests en este repositorio.
